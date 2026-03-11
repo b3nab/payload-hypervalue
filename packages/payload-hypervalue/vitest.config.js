@@ -18,8 +18,8 @@ export default defineConfig(() => {
     ],
     test: {
       environment: 'node',
-      hookTimeout: 30_000,
-      testTimeout: 30_000,
+      hookTimeout: 120_000,  // Testcontainers needs time to pull/start
+      testTimeout: 60_000,
     },
   }
 })
