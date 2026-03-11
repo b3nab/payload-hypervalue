@@ -1,5 +1,6 @@
 README.md
 docker-build.sh
 docker-run.sh
+docker-start-local.sh
 test.sh
 .dockerignore
