@@ -1,1 +1,2 @@
-export { BeforeDashboardClient } from '../components/BeforeDashboardClient.js'
+// Client-side exports — reserved for future admin UI components
+export {}
