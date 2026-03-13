@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: ghcr.io/b3nab/postgis-vector-timescaledb:17-1.0
+    ports:
+      - '5433:5432'
+    environment:
+      POSTGRES_USER: payload
+      POSTGRES_PASSWORD: payload
+      POSTGRES_DB: payload
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
