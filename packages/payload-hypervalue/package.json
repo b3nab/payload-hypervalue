@@ -34,8 +34,8 @@
     "copyfiles": "copyfiles -u 1 \"src/**/*.{html,css,scss,ttf,woff,woff2,eot,svg,jpg,png,json}\" dist/",
     "dev": "pnpm dev:sync && next dev dev --turbo",
     "dev:sync": "pnpm dev:generate-importmap && pnpm dev:generate-types",
-    "dev:generate-importmap": "pnpm dev:payload generate:importmap",
-    "dev:generate-types": "pnpm dev:payload generate:types",
+    "dev:generate-importmap": "pnpm dev:payload generate:importmap & PID=$!; wait $PID; kill -9 $PID 2>/dev/null; echo '[workaround] killed hanging generate:importmap (payload#15553)'",
+    "dev:generate-types": "pnpm dev:payload generate:types & PID=$!; wait $PID; kill -9 $PID 2>/dev/null; echo '[workaround] killed hanging generate:types (payload#15553)'",
     "dev:payload": "cross-env PAYLOAD_CONFIG_PATH=./dev/payload.config.ts payload",
     "generate:importmap": "pnpm dev:generate-importmap",
     "generate:types": "pnpm dev:generate-types",
@@ -61,7 +61,6 @@
     "@types/react-dom": "19.2.3",
     "copyfiles": "2.4.1",
     "cross-env": "^7.0.3",
-    "drizzle-orm": "^0.45.1",
     "eslint": "^9.23.0",
     "eslint-config-next": "15.4.11",
     "graphql": "^16.8.1",
@@ -81,6 +80,7 @@
     "vitest": "4.0.18"
   },
   "peerDependencies": {
+    "@payloadcms/db-postgres": "^3.79.0",
     "payload": "^3.79.0"
   },
   "engines": {
