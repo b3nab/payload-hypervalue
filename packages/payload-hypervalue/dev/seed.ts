@@ -1,21 +1,19 @@
 import type { Payload } from 'payload'
 
-import { devUser } from './helpers/credentials.js'
-
-export const seed = async (payload: Payload) => {
-  const { totalDocs } = await payload.count({
+export const seed = async (payload: Payload): Promise<void> => {
+  // Create dev user
+  const existingUsers = await payload.find({
     collection: 'users',
-    where: {
-      email: {
-        equals: devUser.email,
-      },
-    },
+    limit: 1,
   })
 
-  if (!totalDocs) {
+  if (existingUsers.totalDocs === 0) {
     await payload.create({
       collection: 'users',
-      data: devUser,
+      data: {
+        email: 'dev@payloadcms.com',
+        password: 'test',
+      },
     })
   }
 }

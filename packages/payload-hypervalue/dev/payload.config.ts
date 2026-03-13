@@ -1,6 +1,5 @@
-import { mongooseAdapter } from '@payloadcms/db-mongodb'
+import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
-import { MongoMemoryReplSet } from 'mongodb-memory-server'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { payloadHypervalue } from '@b3nab/payload-hypervalue'
@@ -17,59 +16,57 @@ if (!process.env.ROOT_DIR) {
   process.env.ROOT_DIR = dirname
 }
 
-const buildConfigWithMemoryDB = async () => {
-  if (process.env.NODE_ENV === 'test') {
-    const memoryDB = await MongoMemoryReplSet.create({
-      replSet: {
-        count: 3,
-        dbName: 'payloadmemory',
-      },
-    })
-
-    process.env.DATABASE_URL = `${memoryDB.getUri()}&retryWrites=true`
-  }
-
-  return buildConfig({
-    admin: {
-      importMap: {
-        baseDir: path.resolve(dirname),
-      },
+export default buildConfig({
+  admin: {
+    importMap: {
+      baseDir: path.resolve(dirname),
     },
-    collections: [
-      {
-        slug: 'posts',
-        fields: [],
-      },
-      {
-        slug: 'media',
-        fields: [],
-        upload: {
-          staticDir: path.resolve(dirname, 'media'),
+  },
+  collections: [
+    {
+      slug: 'books',
+      fields: [
+        {
+          name: 'title',
+          type: 'text',
         },
-      },
-    ],
-    db: mongooseAdapter({
-      ensureIndexes: true,
-      url: process.env.DATABASE_URL || '',
-    }),
-    editor: lexicalEditor(),
-    email: testEmailAdapter,
-    onInit: async (payload) => {
-      await seed(payload)
-    },
-    plugins: [
-      payloadHypervalue({
-        collections: {
-          posts: true,
+        {
+          name: 'price',
+          type: 'number',
+          custom: { hypervalue: true },
         },
-      }),
-    ],
-    secret: process.env.PAYLOAD_SECRET || 'test-secret_key',
-    sharp,
-    typescript: {
-      outputFile: path.resolve(dirname, 'payload-types.ts'),
+        {
+          name: 'status',
+          type: 'select',
+          options: ['available', 'out_of_stock', 'discontinued'],
+          custom: { hypervalue: true },
+        },
+      ],
     },
-  })
-}
-
-export default buildConfigWithMemoryDB()
+    {
+      slug: 'media',
+      fields: [],
+      upload: {
+        staticDir: path.resolve(dirname, 'media'),
+      },
+    },
+  ],
+  db: postgresAdapter({
+    pool: {
+      connectionString: process.env.DATABASE_URL || 'postgresql://payload:payload@localhost:5433/payload',
+    },
+  }),
+  editor: lexicalEditor(),
+  email: testEmailAdapter,
+  onInit: async (payload) => {
+    await seed(payload)
+  },
+  plugins: [
+    payloadHypervalue(),
+  ],
+  secret: process.env.PAYLOAD_SECRET || 'test-secret_key',
+  sharp,
+  typescript: {
+    outputFile: path.resolve(dirname, 'payload-types.ts'),
+  },
+})
