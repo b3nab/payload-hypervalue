@@ -1,16 +1,48 @@
 {
-  "name": "hypervalue",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "hv--": "pnpm --filter @b3nab/payload-hypervalue",
-    "dev": "pnpm hv-- dev",
-    "start-db": "cd packages/postgis-vector-timescaledb && ./docker-start-local.sh"
+  "name": "workspace-payload-hypervalue",
+  "author": {
+    "name": "Benedetto Abbenanti",
+    "url": "https://ben.abbenanti.com"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/b3nab/payload-hypervalue/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/b3nab/payload-hypervalue"
+  },
+  "homepage": "https://payload-hypervalue.abbenanti.com",
+  "license": "MIT",
+  "keywords": [
+    "payload-plugin",
+    "payload",
+    "cms",
+    "plugin",
+    "timescaledb",
+    "time-series",
+    "historical",
+    "history",
+    "track"
+  ],
+  "scripts": {
+    "start-db": "cd packages/postgis-vector-timescaledb && ./docker-start-local.sh",
+    "---DOCS---": "",
+    "docs--": "pnpm --filter docs",
+    "doc": "pnpm docs-- dev",
+    "---DEV---": "",
+    "dev": "pnpm plugin-- dev",
+    "---PLUGIN---": "",
+    "plugin--": "pnpm --filter @b3nab/payload-hypervalue",
+    "test": "pnpm plugin-- test",
+    "test:int": "pnpm plugin-- test:int",
+    "test:coverage": "pnpm plugin-- test:coverage",
+    "build": "pnpm plugin-- build",
+    "bump": "pnpm plugin-- bump",
+    "pub": "pnpm publish --filter @b3nab/payload-hypervalue",
+    "pub:local": "pnpm plugin-- publish:local",
+    "ye": "pnpm test && pnpm build && pnpm bump && pnpm pub",
+    "yeah": "pnpm test && pnpm build && pnpm bump && pnpm pub --no-git-checks",
+    "yolo": "pnpm build && pnpm bump && pnpm pub --no-git-checks"
+  },
   "packageManager": "pnpm@10.17.1"
 }
