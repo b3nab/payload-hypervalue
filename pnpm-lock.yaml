@@ -68,6 +68,13 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+    optionalDependencies:
+      lightningcss-linux-arm64-gnu:
+        specifier: ^1.31.1
+        version: 1.31.1
+      lightningcss-linux-x64-gnu:
+        specifier: ^1.31.1
+        version: 1.31.1
 
   packages/payload-hypervalue:
     devDependencies:
