@@ -2,6 +2,15 @@ packages:
   - 'apps/*'
   - 'packages/*'
 
+supportedArchitectures:
+  os:
+    - current
+    - linux
+  cpu:
+    - current
+    - arm64
+    - x64
+
 publicHoistPattern:
   - lightningcss-*
 
