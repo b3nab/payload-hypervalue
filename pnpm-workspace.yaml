@@ -2,6 +2,9 @@ packages:
   - 'apps/*'
   - 'packages/*'
 
+publicHoistPattern:
+  - lightningcss-*
+
 onlyBuiltDependencies:
   - sharp
   - esbuild
