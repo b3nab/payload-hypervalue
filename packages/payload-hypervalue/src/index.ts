@@ -2,9 +2,9 @@ import type { PostgresAdapter } from '@payloadcms/db-postgres'
 import type { Config, DatabaseAdapterObj, Plugin } from 'payload'
 
 import './augment.js'
-import { createAfterChangeHook } from './hooks.js'
+import { createAfterChangeHook, createCollectionAfterChangeHook } from './hooks.js'
 import { queryHypervalue } from './query.js'
-import { setupHypertables, verifyTimescaleVersion } from './timescale.js'
+import { setupHypertables, setupWideHypertables, verifyTimescaleVersion } from './timescale.js'
 import type { HypervaluePluginConfig } from './types.js'
 import { discoverHypervalueFields } from './types.js'
 import { createHypervalueEndpoint } from './endpoints/hypervalueEndpoint.js'
@@ -18,11 +18,11 @@ export const payloadHypervalue =
       config.collections = []
     }
 
-    // Discover all hypervalue fields across collections
-    const discoveredFields = discoverHypervalueFields(config.collections)
+    // Discover all hypervalue fields and collections
+    const { collections: discoveredCollections, fields: discoveredFields } = discoverHypervalueFields(config.collections)
 
-    if (discoveredFields.length === 0) {
-      console.warn('[hypervalue] No fields with custom.hypervalue found. Plugin has nothing to do.')
+    if (discoveredCollections.length === 0 && discoveredFields.length === 0) {
+      console.warn('[hypervalue] No fields or collections with custom.hypervalue found. Plugin has nothing to do.')
       return config
     }
 
@@ -45,28 +45,34 @@ export const payloadHypervalue =
       return config
     }
 
-    // Register REST endpoint
+    // Register REST endpoints
     if (!config.endpoints) {
       config.endpoints = []
     }
 
-    config.endpoints.push({
-      handler: createHypervalueEndpoint(discoveredFields),
-      method: 'get',
-      path: '/hypervalue/:collection/:id/:field',
-    })
+    const endpointHandler = createHypervalueEndpoint(discoveredCollections, discoveredFields)
+    config.endpoints.push(
+      { handler: endpointHandler, method: 'get', path: '/hypervalue/:collection/:id/:field' },
+      { handler: endpointHandler, method: 'get', path: '/hypervalue/:collection/:id' },
+    )
 
     // Register afterChange hooks per collection
-    const fieldsByCollection = new Map<string, typeof discoveredFields>()
+    const narrowFieldsByCollection = new Map<string, typeof discoveredFields>()
     for (const field of discoveredFields) {
-      const existing = fieldsByCollection.get(field.collectionSlug) || []
+      const existing = narrowFieldsByCollection.get(field.collectionSlug) || []
       existing.push(field)
-      fieldsByCollection.set(field.collectionSlug, existing)
+      narrowFieldsByCollection.set(field.collectionSlug, existing)
     }
 
+    const wideCollectionSlugs = new Set(discoveredCollections.map((c) => c.collectionSlug))
+
     for (const collection of config.collections) {
-      const collectionFields = fieldsByCollection.get(collection.slug)
-      if (!collectionFields) continue
+      const narrowFields = narrowFieldsByCollection.get(collection.slug)
+      const wideCollection = wideCollectionSlugs.has(collection.slug)
+        ? discoveredCollections.find((c) => c.collectionSlug === collection.slug)
+        : undefined
+
+      if (!narrowFields && !wideCollection) continue
 
       if (!collection.hooks) {
         collection.hooks = {}
@@ -75,7 +81,15 @@ export const payloadHypervalue =
         collection.hooks.afterChange = []
       }
 
-      collection.hooks.afterChange.push(createAfterChangeHook(collectionFields, pluginConfig))
+      // Wide table hook (collection-level)
+      if (wideCollection) {
+        collection.hooks.afterChange.push(createCollectionAfterChangeHook(wideCollection, pluginConfig))
+      }
+
+      // Narrow table hooks (field-level)
+      if (narrowFields) {
+        collection.hooks.afterChange.push(createAfterChangeHook(narrowFields, pluginConfig))
+      }
     }
 
     // Wire up onInit for hypertable conversion + payload.hypervalue()
@@ -99,12 +113,13 @@ export const payloadHypervalue =
       console.log(`[hypervalue] TimescaleDB ${version} detected.`)
 
       // Convert tables to hypertables + reconcile policies
+      await setupWideHypertables(payload, discoveredCollections, pluginConfig)
       await setupHypertables(payload, discoveredFields, pluginConfig)
-      console.log(`[hypervalue] ${discoveredFields.length} hypertable(s) configured.`)
+      console.log(`[hypervalue] ${discoveredCollections.length} wide + ${discoveredFields.length} narrow hypertable(s) configured.`)
 
       // Attach payload.hypervalue() method
       payload.hypervalue = (args) =>
-        queryHypervalue(payload, discoveredFields, args)
+        queryHypervalue(payload, discoveredCollections, discoveredFields, args)
     }
 
     return config

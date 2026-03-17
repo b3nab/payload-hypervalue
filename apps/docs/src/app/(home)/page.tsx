@@ -169,7 +169,7 @@ export default function HomePage() {
             {[
               {
                 title: 'Hypertables',
-                desc: 'Each tracked field gets its own TimescaleDB hypertable. Configurable chunk intervals, compression, and retention.',
+                desc: 'Track entire collections as wide tables or individual fields as narrow tables. Configurable chunk intervals, compression, and retention.',
               },
               {
                 title: 'Access control',

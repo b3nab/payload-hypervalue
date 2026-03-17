@@ -2,7 +2,7 @@ import type { CollectionAfterChangeHook } from 'payload'
 
 import { sql } from '@payloadcms/db-postgres/drizzle'
 
-import type { DiscoveredField, HypervaluePluginConfig } from './types.js'
+import type { DiscoveredCollection, DiscoveredField, HypervaluePluginConfig } from './types.js'
 
 /**
  * Get the transaction-scoped drizzle instance from the request,
@@ -13,6 +13,53 @@ function getDrizzle(adapter: any, req: any): any {
     return adapter.sessions[req.transactionID].db
   }
   return adapter.drizzle
+}
+
+/** Traverse nested object using a path array */
+function getNestedValue(obj: Record<string, unknown>, path: string[]): unknown {
+  let current: unknown = obj
+  for (const key of path) {
+    if (current == null || typeof current !== 'object') return undefined
+    current = (current as Record<string, unknown>)[key]
+  }
+  return current
+}
+
+/**
+ * Create an afterChange hook that records full snapshots to a wide hypertable.
+ */
+export function createCollectionAfterChangeHook(
+  collection: DiscoveredCollection,
+  config: HypervaluePluginConfig,
+): CollectionAfterChangeHook {
+  return async ({ doc, req }) => {
+    // Skip drafts unless configured to track them
+    if (doc._status && doc._status !== 'published' && !config.trackDrafts) return doc
+
+    const adapter = req.payload.db
+    const schema = adapter.schemaName ?? 'public'
+    const drizzle = getDrizzle(adapter, req)
+    const qualifiedTable = sql.raw(`"${schema}"."${collection.tableName}"`)
+    const recordedAt = new Date().toISOString()
+
+    // Build column names and parameterized values for full snapshot
+    const columnNames = collection.fields.map((f) => sql.raw(`"${f.columnName}"`))
+    const fieldValues = collection.fields.map((field) => {
+      const raw = getNestedValue(doc, field.fieldPath)
+      if (field.sqlValueType === 'jsonb' && raw != null) return sql`${JSON.stringify(raw)}`
+      return sql`${raw ?? null}`
+    })
+
+    const columns = sql.join(columnNames, sql`, `)
+    const values = sql.join(fieldValues, sql`, `)
+
+    await drizzle.execute(
+      sql`INSERT INTO ${qualifiedTable} (recorded_at, document_id, ${columns})
+          VALUES (${recordedAt}, ${doc.id}, ${values})`,
+    )
+
+    return doc
+  }
 }
 
 /**

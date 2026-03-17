@@ -1,13 +1,16 @@
 import type { PayloadHandler } from 'payload'
 
-import type { DiscoveredField } from '../types.js'
+import type { DiscoveredCollection, DiscoveredField } from '../types.js'
 import { queryHypervalue } from '../query.js'
 
 /**
  * Factory to create the hypervalue REST endpoint handler.
- * Route: GET /api/hypervalue/:collection/:id/:field
+ * Routes:
+ *   GET /api/hypervalue/:collection/:id/:field  (single field history)
+ *   GET /api/hypervalue/:collection/:id          (full snapshot history)
  */
 export function createHypervalueEndpoint(
+  discoveredCollections: DiscoveredCollection[],
   discoveredFields: DiscoveredField[],
 ): PayloadHandler {
   return async (req) => {
@@ -15,18 +18,18 @@ export function createHypervalueEndpoint(
       const url = new URL(req.url!)
       const pathParts = url.pathname.split('/').filter(Boolean)
 
-      // Expected: ['api', 'hypervalue', collection, id, field]
+      // Expected: ['api', 'hypervalue', collection, id] or ['api', 'hypervalue', collection, id, field]
       const hypervalueIdx = pathParts.indexOf('hypervalue')
-      if (hypervalueIdx === -1 || pathParts.length < hypervalueIdx + 4) {
+      if (hypervalueIdx === -1 || pathParts.length < hypervalueIdx + 3) {
         return Response.json(
-          { error: 'Invalid path. Expected /api/hypervalue/:collection/:id/:field' },
+          { error: 'Invalid path. Expected /api/hypervalue/:collection/:id[/:field]' },
           { status: 400 },
         )
       }
 
       const collection = pathParts[hypervalueIdx + 1]
       const id = pathParts[hypervalueIdx + 2]
-      const field = pathParts[hypervalueIdx + 3]
+      const field = pathParts[hypervalueIdx + 3] // undefined for collection-level queries
 
       const at = url.searchParams.get('at')
       const from = url.searchParams.get('from')
@@ -34,7 +37,7 @@ export function createHypervalueEndpoint(
       const limit = url.searchParams.get('limit')
       const offset = url.searchParams.get('offset')
 
-      const result = await queryHypervalue(req.payload, discoveredFields, {
+      const result = await queryHypervalue(req.payload, discoveredCollections, discoveredFields, {
         collection,
         id,
         field,
