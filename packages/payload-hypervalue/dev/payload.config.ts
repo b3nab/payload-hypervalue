@@ -44,6 +44,24 @@ export default buildConfig({
       ],
     },
     {
+      slug: 'products',
+      custom: { hypervalue: true },
+      fields: [
+        { name: 'name', type: 'text' },
+        { name: 'price', type: 'number' },
+        { name: 'active', type: 'checkbox' },
+        {
+          name: 'metadata',
+          type: 'group',
+          fields: [
+            { name: 'category', type: 'text' },
+            { name: 'rating', type: 'number' },
+          ],
+        },
+        { name: 'internal', type: 'text', custom: { hypervalue: false } },
+      ],
+    },
+    {
       slug: 'media',
       fields: [],
       upload: {

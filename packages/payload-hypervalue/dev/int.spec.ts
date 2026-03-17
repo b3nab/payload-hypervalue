@@ -26,7 +26,7 @@ afterAll(async () => {
   stopTestDB().catch(() => {})
 }, 5_000)
 
-describe('Hypervalue plugin integration', () => {
+describe('Hypervalue plugin — field-level (narrow tables)', () => {
   let bookId: number | string
 
   test('creates a book and records initial price history', async () => {
@@ -165,6 +165,141 @@ describe('Hypervalue plugin integration', () => {
         collection: 'books',
         id: book.id,
         field: 'title', // not a hypervalue field (no custom.hypervalue)
+        overrideAccess: true,
+      }),
+    ).rejects.toThrow('not a hypervalue field')
+  })
+})
+
+describe('Hypervalue plugin — collection-level (wide tables)', () => {
+  let productId: number | string
+
+  test('creates a product and records full snapshot', async () => {
+    const product = await payload.create({
+      collection: 'products',
+      data: {
+        name: 'Widget',
+        price: 19.99,
+        active: true,
+        metadata: { category: 'electronics', rating: 4.5 },
+      },
+    })
+
+    productId = product.id
+
+    // Query full snapshot — no field param
+    const history = await payload.hypervalue({
+      collection: 'products',
+      id: productId,
+      overrideAccess: true,
+    })
+
+    expect(history.docs).toHaveLength(1)
+    const snapshot = history.docs[0] as Record<string, unknown>
+    expect(snapshot.recorded_at).toBeDefined()
+    expect(snapshot.name).toBe('Widget')
+    expect(Number(snapshot.price)).toBe(19.99)
+    expect(snapshot.active).toBe(true)
+    expect(snapshot.metadata_category).toBe('electronics')
+    expect(Number(snapshot.metadata_rating)).toBe(4.5)
+  })
+
+  test('records snapshot on update', async () => {
+    await payload.update({
+      collection: 'products',
+      where: { id: { equals: productId } },
+      data: { price: 24.99, active: false },
+    })
+
+    const history = await payload.hypervalue({
+      collection: 'products',
+      id: productId,
+      overrideAccess: true,
+    })
+
+    expect(history.docs).toHaveLength(2)
+    const latest = history.docs[0] as Record<string, unknown>
+    expect(Number(latest.price)).toBe(24.99)
+    expect(latest.active).toBe(false)
+    // Unchanged fields still present in snapshot
+    expect(latest.name).toBe('Widget')
+  })
+
+  test('query single field from wide table', async () => {
+    const history = await payload.hypervalue({
+      collection: 'products',
+      id: productId,
+      field: 'price',
+      overrideAccess: true,
+    })
+
+    expect(history.docs).toHaveLength(2)
+    // Returns { value, recorded_at } shape — same as narrow tables
+    expect(Number(history.docs[0].value)).toBe(24.99)
+    expect(Number(history.docs[1].value)).toBe(19.99)
+  })
+
+  test('point-in-time snapshot query', async () => {
+    const history = await payload.hypervalue({
+      collection: 'products',
+      id: productId,
+      at: new Date(),
+      overrideAccess: true,
+    })
+
+    expect(history.docs).toHaveLength(1)
+    const snapshot = history.docs[0] as Record<string, unknown>
+    expect(Number(snapshot.price)).toBe(24.99)
+  })
+
+  test('opted-out field is not in wide table', async () => {
+    // 'internal' field has hypervalue: false — should not appear in snapshot
+    const history = await payload.hypervalue({
+      collection: 'products',
+      id: productId,
+      overrideAccess: true,
+    })
+
+    const snapshot = history.docs[0] as Record<string, unknown>
+    expect(snapshot).not.toHaveProperty('internal')
+  })
+
+  test('history is deleted when product is deleted (CASCADE)', async () => {
+    await payload.delete({
+      collection: 'products',
+      where: { id: { equals: productId } },
+    })
+
+    const newProduct = await payload.create({
+      collection: 'products',
+      data: {
+        name: 'Gadget',
+        price: 9.99,
+        active: true,
+        metadata: { category: 'tools', rating: 3.0 },
+      },
+    })
+
+    const history = await payload.hypervalue({
+      collection: 'products',
+      id: newProduct.id,
+      overrideAccess: true,
+    })
+
+    expect(history.docs).toHaveLength(1)
+  })
+
+  test('throws when querying non-existent field from wide table', async () => {
+    const product = await payload.create({
+      collection: 'products',
+      data: { name: 'Test', price: 1, active: true, metadata: { category: 'x', rating: 1 } },
+    })
+
+    await expect(
+      payload.hypervalue({
+        collection: 'products',
+        id: product.id,
+        field: 'nonexistent',
         overrideAccess: true,
       }),
     ).rejects.toThrow('not a hypervalue field')

@@ -68,6 +68,7 @@ export interface Config {
   blocks: {};
   collections: {
     books: Book;
+    products: Product;
     media: Media;
     'payload-kv': PayloadKv;
     users: User;
@@ -78,6 +79,7 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     books: BooksSelect<false> | BooksSelect<true>;
+    products: ProductsSelect<false> | ProductsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -128,6 +130,23 @@ export interface Book {
   title?: string | null;
   price?: number | null;
   status?: ('available' | 'out_of_stock' | 'discontinued') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: number;
+  name?: string | null;
+  price?: number | null;
+  active?: boolean | null;
+  metadata?: {
+    category?: string | null;
+    rating?: number | null;
+  };
+  internal?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -203,6 +222,10 @@ export interface PayloadLockedDocument {
         value: number | Book;
       } | null)
     | ({
+        relationTo: 'products';
+        value: number | Product;
+      } | null)
+    | ({
         relationTo: 'media';
         value: number | Media;
       } | null)
@@ -260,6 +283,24 @@ export interface BooksSelect<T extends boolean = true> {
   title?: T;
   price?: T;
   status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products_select".
+ */
+export interface ProductsSelect<T extends boolean = true> {
+  name?: T;
+  price?: T;
+  active?: T;
+  metadata?:
+    | T
+    | {
+        category?: T;
+        rating?: T;
+      };
+  internal?: T;
   updatedAt?: T;
   createdAt?: T;
 }
