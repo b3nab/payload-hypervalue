@@ -32,7 +32,7 @@
     "build:types": "tsc --outDir dist --rootDir ./src",
     "clean": "rimraf {dist,*.tsbuildinfo}",
     "copyfiles": "copyfiles -u 1 \"src/**/*.{html,css,scss,ttf,woff,woff2,eot,svg,jpg,png,json}\" dist/",
-    "dev": "pnpm dev:sync && next dev dev --turbo",
+    "dev": "pnpm dev:sync && next dev dev -p 7777 --turbo",
     "dev:sync": "pnpm dev:generate-importmap && pnpm dev:generate-types",
     "dev:generate-importmap": "pnpm dev:payload generate:importmap & PID=$!; wait $PID; kill -9 $PID 2>/dev/null; echo '[workaround] killed hanging generate:importmap (payload#15553)'",
     "dev:generate-types": "pnpm dev:payload generate:types & PID=$!; wait $PID; kill -9 $PID 2>/dev/null; echo '[workaround] killed hanging generate:types (payload#15553)'",
