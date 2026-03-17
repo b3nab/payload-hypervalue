@@ -112,6 +112,7 @@
           "content": "the history layer for payload cms",
           "fontFamily": "JetBrains Mono",
           "fontSize": 10,
+          "fontWeight": "normal",
           "letterSpacing": 1
         }
       ]
@@ -227,6 +228,7 @@
           "content": "the history layer for payload cms",
           "fontFamily": "JetBrains Mono",
           "fontSize": 9,
+          "fontWeight": "normal",
           "letterSpacing": 1
         }
       ]
@@ -342,6 +344,7 @@
           "content": "the history layer for payload cms",
           "fontFamily": "JetBrains Mono",
           "fontSize": 10,
+          "fontWeight": "normal",
           "letterSpacing": 1
         }
       ]
@@ -457,6 +460,7 @@
           "content": "the history layer for payload cms",
           "fontFamily": "JetBrains Mono",
           "fontSize": 9,
+          "fontWeight": "normal",
           "letterSpacing": 1
         }
       ]
@@ -553,6 +557,7 @@
           "content": "the history layer for payload cms",
           "fontFamily": "JetBrains Mono",
           "fontSize": 10,
+          "fontWeight": "normal",
           "letterSpacing": 1
         }
       ]
@@ -653,6 +658,7 @@
           "content": "the history layer for payload cms",
           "fontFamily": "JetBrains Mono",
           "fontSize": 10,
+          "fontWeight": "normal",
           "letterSpacing": 1
         }
       ]
@@ -795,6 +801,7 @@
           "content": "the history layer for payload cms",
           "fontFamily": "JetBrains Mono",
           "fontSize": 10,
+          "fontWeight": "normal",
           "letterSpacing": 1
         }
       ]
@@ -895,6 +902,7 @@
           "content": "the history layer for payload cms",
           "fontFamily": "JetBrains Mono",
           "fontSize": 10,
+          "fontWeight": "normal",
           "letterSpacing": 1
         }
       ]
@@ -984,6 +992,7 @@
           "content": "the history layer for payload cms",
           "fontFamily": "JetBrains Mono",
           "fontSize": 10,
+          "fontWeight": "normal",
           "letterSpacing": 1
         }
       ]
@@ -1059,6 +1068,7 @@
           "content": "the history layer for payload cms",
           "fontFamily": "JetBrains Mono",
           "fontSize": 10,
+          "fontWeight": "normal",
           "letterSpacing": 1
         }
       ]
@@ -1183,6 +1193,7 @@
           "content": "the history layer for payload cms",
           "fontFamily": "JetBrains Mono",
           "fontSize": 10,
+          "fontWeight": "normal",
           "letterSpacing": 1
         }
       ]
@@ -1279,6 +1290,7 @@
           "content": "the history layer for payload cms",
           "fontFamily": "JetBrains Mono",
           "fontSize": 10,
+          "fontWeight": "normal",
           "letterSpacing": 1
         }
       ]
@@ -1378,6 +1390,7 @@
           "content": "the history layer for payload cms",
           "fontFamily": "JetBrains Mono",
           "fontSize": 10,
+          "fontWeight": "normal",
           "letterSpacing": 1
         }
       ]
@@ -1450,6 +1463,7 @@
           "content": "the history layer for payload cms",
           "fontFamily": "JetBrains Mono",
           "fontSize": 10,
+          "fontWeight": "normal",
           "letterSpacing": 1
         }
       ]
@@ -5566,6 +5580,296 @@
           "id": "Zn8XF",
           "x": 110,
           "y": 240,
+          "name": "tagline",
+          "fill": "#78716C",
+          "content": "the history layer for payload cms",
+          "fontFamily": "JetBrains Mono",
+          "fontSize": 24,
+          "fontWeight": "normal",
+          "letterSpacing": 1
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "h8pEg",
+      "x": 2480,
+      "y": -1309,
+      "name": "Social Preview - Dark",
+      "clip": true,
+      "width": 1280,
+      "height": 640,
+      "fill": "#121212",
+      "layout": "none",
+      "children": [
+        {
+          "type": "path",
+          "id": "K6l6E",
+          "x": 0,
+          "y": 0,
+          "name": "edge1",
+          "opacity": 0.5,
+          "geometry": "M0 0l32 0 0 640-32 0z",
+          "fill": "#92400E",
+          "width": 32,
+          "height": 640
+        },
+        {
+          "type": "path",
+          "id": "KIE4T",
+          "x": 32,
+          "y": 0,
+          "name": "edge2",
+          "opacity": 0.7,
+          "geometry": "M0 0l24 0 0 640-24 0z",
+          "fill": "#B45309",
+          "width": 24,
+          "height": 640
+        },
+        {
+          "type": "path",
+          "id": "9i0K0",
+          "x": 56,
+          "y": 0,
+          "name": "edge3",
+          "opacity": 0.85,
+          "geometry": "M0 0l16 0 0 640-16 0z",
+          "fill": "#D97706",
+          "width": 16,
+          "height": 640
+        },
+        {
+          "type": "path",
+          "id": "G94fs",
+          "x": 72,
+          "y": 0,
+          "name": "edge4",
+          "geometry": "M0 0l8 0 0 640-8 0z",
+          "fill": "#F59E0B",
+          "width": 8,
+          "height": 640
+        },
+        {
+          "type": "path",
+          "id": "z8RuS",
+          "x": 1012,
+          "y": 234,
+          "name": "p1",
+          "opacity": 0.35,
+          "geometry": "M25 0l76 0q4 0 1 3l-16 18q-3 3-6 3l-76 0q-4 0-1-3l16-18q3-3 6-3z",
+          "fill": "#92400E",
+          "width": 104,
+          "height": 24
+        },
+        {
+          "type": "path",
+          "id": "z0hKo",
+          "x": 990,
+          "y": 264,
+          "name": "p2",
+          "opacity": 0.6,
+          "geometry": "M32 0l112 0q4 0 1 3l-23 22q-3 3-6 3l-112 0q-4 0-1-3l23-22q3-3 6-3z",
+          "fill": "#B45309",
+          "width": 148,
+          "height": 28
+        },
+        {
+          "type": "path",
+          "id": "WY4aR",
+          "x": 968,
+          "y": 298,
+          "name": "p3",
+          "opacity": 0.85,
+          "geometry": "M40 0l148 0q4 0 0 4l-29 23q-4 4-7 4l-148 0q-4 0 0-4l29-23q4-4 7-4z",
+          "fill": "#D97706",
+          "width": 191,
+          "height": 31
+        },
+        {
+          "type": "path",
+          "id": "EysiS",
+          "x": 946,
+          "y": 335,
+          "name": "p4",
+          "geometry": "M49 0l180 0q5 0 1 4l-34 27q-5 4-10 4l-180 0q-5 0-1-4l34-27q5-4 10-4z",
+          "fill": "#F59E0B",
+          "width": 234,
+          "height": 35
+        },
+        {
+          "type": "text",
+          "id": "D1fPq",
+          "x": 110,
+          "y": 220,
+          "name": "scope",
+          "fill": "#A8A29E",
+          "content": "@b3nab/",
+          "fontFamily": "JetBrains Mono",
+          "fontSize": 36,
+          "fontWeight": "500"
+        },
+        {
+          "type": "text",
+          "id": "frAc5",
+          "x": 106,
+          "y": 260,
+          "name": "name",
+          "fill": "#FFFFFF",
+          "content": "payload-hypervalue",
+          "fontFamily": "JetBrains Mono",
+          "fontSize": 72,
+          "fontWeight": "700"
+        },
+        {
+          "type": "text",
+          "id": "gOCTK",
+          "x": 110,
+          "y": 360,
+          "name": "tagline",
+          "fill": "#78716C",
+          "content": "the history layer for payload cms",
+          "fontFamily": "JetBrains Mono",
+          "fontSize": 24,
+          "fontWeight": "normal",
+          "letterSpacing": 1
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "7qqOv",
+      "x": 2480,
+      "y": -569,
+      "name": "Social Preview - Light",
+      "clip": true,
+      "width": 1280,
+      "height": 640,
+      "fill": "#F5F5F4",
+      "layout": "none",
+      "children": [
+        {
+          "type": "path",
+          "id": "fEWQB",
+          "x": 0,
+          "y": 0,
+          "name": "edge1",
+          "opacity": 0.5,
+          "geometry": "M0 0l32 0 0 640-32 0z",
+          "fill": "#92400E",
+          "width": 32,
+          "height": 640
+        },
+        {
+          "type": "path",
+          "id": "gqIxR",
+          "x": 32,
+          "y": 0,
+          "name": "edge2",
+          "opacity": 0.7,
+          "geometry": "M0 0l24 0 0 640-24 0z",
+          "fill": "#B45309",
+          "width": 24,
+          "height": 640
+        },
+        {
+          "type": "path",
+          "id": "8KrrY",
+          "x": 56,
+          "y": 0,
+          "name": "edge3",
+          "opacity": 0.85,
+          "geometry": "M0 0l16 0 0 640-16 0z",
+          "fill": "#D97706",
+          "width": 16,
+          "height": 640
+        },
+        {
+          "type": "path",
+          "id": "Tmu6I",
+          "x": 72,
+          "y": 0,
+          "name": "edge4",
+          "geometry": "M0 0l8 0 0 640-8 0z",
+          "fill": "#F59E0B",
+          "width": 8,
+          "height": 640
+        },
+        {
+          "type": "path",
+          "id": "dva2V",
+          "x": 1012,
+          "y": 234,
+          "name": "p1",
+          "opacity": 0.35,
+          "geometry": "M25 0l76 0q4 0 1 3l-16 18q-3 3-6 3l-76 0q-4 0-1-3l16-18q3-3 6-3z",
+          "fill": "#92400E",
+          "width": 104,
+          "height": 24
+        },
+        {
+          "type": "path",
+          "id": "KNIdJ",
+          "x": 990,
+          "y": 264,
+          "name": "p2",
+          "opacity": 0.6,
+          "geometry": "M32 0l112 0q4 0 1 3l-23 22q-3 3-6 3l-112 0q-4 0-1-3l23-22q3-3 6-3z",
+          "fill": "#B45309",
+          "width": 148,
+          "height": 28
+        },
+        {
+          "type": "path",
+          "id": "xLEMd",
+          "x": 968,
+          "y": 298,
+          "name": "p3",
+          "opacity": 0.85,
+          "geometry": "M40 0l148 0q4 0 0 4l-29 23q-4 4-7 4l-148 0q-4 0 0-4l29-23q4-4 7-4z",
+          "fill": "#D97706",
+          "width": 191,
+          "height": 31
+        },
+        {
+          "type": "path",
+          "id": "zQlm8",
+          "x": 946,
+          "y": 335,
+          "name": "p4",
+          "geometry": "M49 0l180 0q5 0 1 4l-34 27q-5 4-10 4l-180 0q-5 0-1-4l34-27q5-4 10-4z",
+          "fill": "#F59E0B",
+          "width": 234,
+          "height": 35
+        },
+        {
+          "type": "text",
+          "id": "1WpiG",
+          "x": 110,
+          "y": 220,
+          "name": "scope",
+          "fill": "#78716C",
+          "content": "@b3nab/",
+          "fontFamily": "JetBrains Mono",
+          "fontSize": 36,
+          "fontWeight": "500"
+        },
+        {
+          "type": "text",
+          "id": "MzE8g",
+          "x": 106,
+          "y": 260,
+          "name": "name",
+          "fill": "#1C1917",
+          "content": "payload-hypervalue",
+          "fontFamily": "JetBrains Mono",
+          "fontSize": 72,
+          "fontWeight": "700"
+        },
+        {
+          "type": "text",
+          "id": "S8H9d",
+          "x": 110,
+          "y": 360,
           "name": "tagline",
           "fill": "#78716C",
           "content": "the history layer for payload cms",
