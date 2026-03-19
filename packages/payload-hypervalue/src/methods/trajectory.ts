@@ -105,12 +105,13 @@ export const trajectoryMethod = defineMethod<TrajectoryArgs, TrajectoryResult>({
   },
 
   endpoint: {
-    path: '/hypervalue/:collection/:id/trajectory',
+    path: '/hypervalue/:collection/trajectory',
     method: 'get',
     parseRequest: (params, query) => {
+      const id = query.get('id')
       const args: TrajectoryArgs = {
         collection: params.collection,
-        id: params.id,
+        id: id ?? '',
       }
       const field = query.get('field')
       if (field) args.field = field

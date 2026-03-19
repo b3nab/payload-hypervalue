@@ -65,12 +65,13 @@ export const historyMethod = defineMethod<HistoryArgs, HypervalueResult>({
   },
 
   endpoint: {
-    path: '/hypervalue/:collection/:id/:field?',
+    path: '/hypervalue/:collection/:field/history',
     method: 'get',
     parseRequest: (params, query) => {
+      const id = query.get('id')
       const args: HistoryArgs = {
         collection: params.collection,
-        id: params.id,
+        id: id ?? '',
         field: params.field || undefined,
       }
       const at = query.get('at')
