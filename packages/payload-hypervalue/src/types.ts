@@ -102,6 +102,7 @@ export function inferSqlType(field: { fieldType: string; hypervalueConfig: Hyper
     date: 'timestamp with time zone',
     json: 'jsonb',
     relationship: 'uuid',
+    point: 'geometry(POINT, 4326)',
   }
 
   return typeMap[field.fieldType] || 'text'
@@ -109,7 +110,7 @@ export function inferSqlType(field: { fieldType: string; hypervalueConfig: Hyper
 
 /** Supported scalar field types */
 const SUPPORTED_FIELD_TYPES = new Set([
-  'number', 'text', 'select', 'checkbox', 'date', 'json', 'relationship',
+  'number', 'text', 'select', 'checkbox', 'date', 'json', 'relationship', 'point',
 ])
 
 /** Recursively walk fields to discover scalar columns for wide tables */

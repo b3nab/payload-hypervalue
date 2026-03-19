@@ -6,11 +6,28 @@ import { createAfterChangeHook, createCollectionAfterChangeHook } from './hooks.
 import { builtinMethods } from './registry/index.js'
 import { executeDescriptor } from './registry/execute.js'
 import { createEndpointsFromRegistry } from './registry/endpoint.js'
+import { createBatchFunction } from './batch/index.js'
 import { detectToolkit, setupHypertables, setupWideHypertables, verifyTimescaleVersion } from './timescale.js'
 import type { HypervaluePluginConfig } from './types.js'
 import { discoverHypervalueFields } from './types.js'
 
 export type { HypervaluePluginConfig, HypervalueQueryArgs, HypervalueResult } from './types.js'
+export type {
+  HypervalueFieldMap,
+  HypervalueCollectionSlug,
+  HypervalueFieldOf,
+  BaseArgs,
+  WithField,
+  WithOptionalField,
+  WithId,
+  WithOptionalId,
+  WithTimeRange,
+  WithRequiredTimeRange,
+  WithAt,
+  WithPagination,
+  WithInterval,
+  WithOptionalInterval,
+} from './registry/args.js'
 
 export const payloadHypervalue =
   (pluginConfig: HypervaluePluginConfig = {}): Plugin =>
@@ -27,6 +44,54 @@ export const payloadHypervalue =
       console.warn('[hypervalue] No fields or collections with custom.hypervalue found. Plugin has nothing to do.')
       return config
     }
+
+    // Inject HypervalueFieldMap into generated types via typescript.schema
+    config.typescript = config.typescript || {}
+    config.typescript.schema = config.typescript.schema || []
+
+    config.typescript.schema.push(({ jsonSchema }) => {
+      // Build field map: { books: ['price', 'status'], products: ['name', 'price', ...] }
+      const fieldsByCollection: Record<string, string[]> = {}
+
+      for (const col of discoveredCollections) {
+        if (!fieldsByCollection[col.collectionSlug]) {
+          fieldsByCollection[col.collectionSlug] = []
+        }
+        for (const f of col.fields) {
+          if (!fieldsByCollection[col.collectionSlug].includes(f.fieldName)) {
+            fieldsByCollection[col.collectionSlug].push(f.fieldName)
+          }
+        }
+      }
+      for (const field of discoveredFields) {
+        if (!fieldsByCollection[field.collectionSlug]) {
+          fieldsByCollection[field.collectionSlug] = []
+        }
+        if (!fieldsByCollection[field.collectionSlug].includes(field.fieldName)) {
+          fieldsByCollection[field.collectionSlug].push(field.fieldName)
+        }
+      }
+
+      // Inject hypervalueFields into the Config definition
+      const configDef = jsonSchema.definitions?.Config as Record<string, unknown> | undefined
+      if (configDef && typeof configDef === 'object') {
+        const props = configDef.properties as Record<string, unknown> | undefined
+        if (props) {
+          const properties: Record<string, { type: string; enum: string[] }> = {}
+          for (const [slug, fields] of Object.entries(fieldsByCollection)) {
+            properties[slug] = { type: 'string', enum: fields }
+          }
+          props.hypervalueFields = {
+            type: 'object',
+            properties,
+            required: Object.keys(properties),
+            additionalProperties: false,
+          }
+        }
+      }
+
+      return jsonSchema
+    })
 
     if (!config.db) {
       throw new Error('[hypervalue] No database adapter configured. The hypervalue plugin requires @payloadcms/db-postgres.')
@@ -132,6 +197,7 @@ export const payloadHypervalue =
           return executeDescriptor(payload, descriptor, args)
         }
       }
+      ;(namespace as any).batch = createBatchFunction(payload, builtinMethods, discoveryResult)
       payload.hypervalue = namespace as any
     }
 

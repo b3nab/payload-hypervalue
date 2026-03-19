@@ -1,29 +1,14 @@
 import { sql } from '@payloadcms/db-postgres/drizzle'
 import type { SQL } from '@payloadcms/db-postgres/drizzle'
-import type { CollectionSlug, PayloadRequest } from 'payload'
 
 import { defineMethod } from '../registry/define.js'
+import type { BaseArgs, WithOptionalField, WithId, WithTimeRange, WithPagination } from '../registry/args.js'
 import type { HypervalueDescriptor } from '../registry/types.js'
 import type { HypervalueResult, HypervalueRecord, HypervalueSnapshotRecord } from '../types.js'
 
-export type HistoryArgs = {
-  collection: CollectionSlug
-  id: string | number
-  field?: string
+export type HistoryArgs = BaseArgs & WithId & WithOptionalField & WithTimeRange & WithPagination & {
   /** Point-in-time query */
   at?: Date
-  /** Range query start */
-  from?: Date
-  /** Range query end */
-  to?: Date
-  /** Pagination limit. Default: 10 */
-  limit?: number
-  /** Pagination offset. Default: 0 */
-  offset?: number
-  /** Request object for access control */
-  req?: PayloadRequest
-  /** Bypass access control. Default: false */
-  overrideAccess?: boolean
 }
 
 export const historyMethod = defineMethod<HistoryArgs, HypervalueResult>({

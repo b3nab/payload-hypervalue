@@ -46,8 +46,12 @@ export function createCollectionAfterChangeHook(
     const columnNames = collection.fields.map((f) => sql.raw(`"${f.columnName}"`))
     const fieldValues = collection.fields.map((field) => {
       const raw = getNestedValue(doc, field.fieldPath)
-      if (field.sqlValueType === 'jsonb' && raw != null) return sql`${JSON.stringify(raw)}`
-      return sql`${raw ?? null}`
+      if (raw == null) return sql`${null}`
+      if (field.sqlValueType === 'jsonb') return sql`${JSON.stringify(raw)}`
+      if (field.sqlValueType === 'geometry(POINT, 4326)' && Array.isArray(raw)) {
+        return sql`ST_SetSRID(ST_MakePoint(${raw[0]}, ${raw[1]}), 4326)`
+      }
+      return sql`${raw}`
     })
 
     const columns = sql.join(columnNames, sql`, `)
@@ -75,11 +79,28 @@ export function createAfterChangeHook(
     const drizzle = getDrizzle(adapter, req)
 
     for (const hvField of fields) {
-      const fieldValue = doc[hvField.fieldName]
+      let fieldValue = doc[hvField.fieldName]
       const prevValue = previousDoc?.[hvField.fieldName]
 
+      // Payload omits point fields from the doc returned by afterChange on update — re-fetch
+      if (hvField.sqlValueType === 'geometry(POINT, 4326)' && fieldValue == null && operation === 'update') {
+        const fresh = await req.payload.findByID({
+          collection: hvField.collectionSlug as any,
+          id: doc.id,
+          overrideAccess: true,
+          req,
+        })
+        fieldValue = fresh?.[hvField.fieldName]
+      }
+
       // Skip if value didn't change (updates only)
-      if (operation !== 'create' && fieldValue === prevValue) continue
+      if (operation !== 'create') {
+        if (hvField.sqlValueType === 'geometry(POINT, 4326)') {
+          // Compare point arrays by value
+          if (Array.isArray(fieldValue) && Array.isArray(prevValue) &&
+              fieldValue[0] === prevValue[0] && fieldValue[1] === prevValue[1]) continue
+        } else if (fieldValue === prevValue) continue
+      }
 
       // Skip if null/undefined
       if (fieldValue == null) continue
@@ -88,13 +109,20 @@ export function createAfterChangeHook(
       if (doc._status && doc._status !== 'published' && !config.trackDrafts) continue
 
       const recordedAt = new Date().toISOString()
-      const serializedValue = hvField.sqlValueType === 'jsonb' ? JSON.stringify(fieldValue) : fieldValue
-
       const qualifiedTable = sql.raw(`"${schema}"."${hvField.tableName}"`)
-      await drizzle.execute(
-        sql`INSERT INTO ${qualifiedTable} (recorded_at, document_id, value)
-            VALUES (${recordedAt}, ${doc.id}, ${serializedValue})`
-      )
+
+      if (hvField.sqlValueType === 'geometry(POINT, 4326)' && Array.isArray(fieldValue)) {
+        await drizzle.execute(
+          sql`INSERT INTO ${qualifiedTable} (recorded_at, document_id, value)
+              VALUES (${recordedAt}, ${doc.id}, ST_SetSRID(ST_MakePoint(${fieldValue[0]}, ${fieldValue[1]}), 4326))`
+        )
+      } else {
+        const serializedValue = hvField.sqlValueType === 'jsonb' ? JSON.stringify(fieldValue) : fieldValue
+        await drizzle.execute(
+          sql`INSERT INTO ${qualifiedTable} (recorded_at, document_id, value)
+              VALUES (${recordedAt}, ${doc.id}, ${serializedValue})`
+        )
+      }
     }
 
     return doc

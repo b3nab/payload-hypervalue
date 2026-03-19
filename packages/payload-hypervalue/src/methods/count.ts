@@ -1,23 +1,11 @@
 import { sql } from '@payloadcms/db-postgres/drizzle'
 import type { SQL } from '@payloadcms/db-postgres/drizzle'
-import type { CollectionSlug, PayloadRequest } from 'payload'
 
 import { defineMethod } from '../registry/define.js'
+import type { BaseArgs, WithOptionalField, WithOptionalId, WithTimeRange } from '../registry/args.js'
 import type { HypervalueDescriptor } from '../registry/types.js'
 
-export type CountArgs = {
-  collection: CollectionSlug
-  field?: string
-  id?: string | number
-  /** Range query start */
-  from?: Date
-  /** Range query end */
-  to?: Date
-  /** Request object for access control */
-  req?: PayloadRequest
-  /** Bypass access control. Default: false */
-  overrideAccess?: boolean
-}
+export type CountArgs = BaseArgs & WithOptionalField & WithOptionalId & WithTimeRange
 
 type CountResult = { totalDocs: number }
 

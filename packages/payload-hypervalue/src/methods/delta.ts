@@ -1,20 +1,11 @@
 import { sql } from '@payloadcms/db-postgres/drizzle'
-import type { CollectionSlug, PayloadRequest } from 'payload'
 
 import { defineMethod } from '../registry/define.js'
+import type { BaseArgs, WithField, WithOptionalId, WithOptionalInterval, WithTimeRange } from '../registry/args.js'
 import type { HypervalueDescriptor } from '../registry/types.js'
 import { resolveTable, validateNumeric, buildWhereClause } from '../registry/utils.js'
 
-export type DeltaArgs = {
-  collection: CollectionSlug
-  field: string
-  id?: string | number
-  interval?: string
-  from?: Date
-  to?: Date
-  req?: PayloadRequest
-  overrideAccess?: boolean
-}
+export type DeltaArgs = BaseArgs & WithField & WithOptionalId & WithOptionalInterval & WithTimeRange
 
 type PerRecordDelta = { delta: number; rate: number | null; recorded_at: string }
 type BucketedDelta = { bucket: string; delta: number }

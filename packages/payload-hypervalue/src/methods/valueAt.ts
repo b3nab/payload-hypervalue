@@ -1,21 +1,11 @@
 import { sql } from '@payloadcms/db-postgres/drizzle'
-import type { CollectionSlug, PayloadRequest } from 'payload'
 
 import { defineMethod } from '../registry/define.js'
+import type { BaseArgs, WithOptionalField, WithId, WithAt } from '../registry/args.js'
 import type { HypervalueDescriptor } from '../registry/types.js'
 import type { HypervalueRecord, HypervalueSnapshotRecord } from '../types.js'
 
-export type ValueAtArgs = {
-  collection: CollectionSlug
-  field?: string
-  id: string | number
-  /** The point in time to query */
-  at: Date
-  /** Request object for access control */
-  req?: PayloadRequest
-  /** Bypass access control. Default: false */
-  overrideAccess?: boolean
-}
+export type ValueAtArgs = BaseArgs & WithOptionalField & WithId & WithAt
 
 type ValueAtResult = { doc: HypervalueRecord | HypervalueSnapshotRecord | null }
 

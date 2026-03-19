@@ -1,22 +1,14 @@
 import { sql } from '@payloadcms/db-postgres/drizzle'
-import type { CollectionSlug, PayloadRequest } from 'payload'
 
 import { defineMethod } from '../registry/define.js'
+import type { BaseArgs, WithField, WithOptionalId, WithOptionalInterval, WithTimeRange } from '../registry/args.js'
 import type { HypervalueDescriptor } from '../registry/types.js'
 import { resolveTable, validateNumeric, buildWhereClause } from '../registry/utils.js'
 
 export type AggregateMetric = 'avg' | 'sum' | 'min' | 'max' | 'count'
 
-export type AggregateArgs = {
-  collection: CollectionSlug
-  field: string
-  id?: string | number
-  interval?: string
+export type AggregateArgs = BaseArgs & WithField & WithOptionalId & WithOptionalInterval & WithTimeRange & {
   metric: AggregateMetric
-  from?: Date
-  to?: Date
-  req?: PayloadRequest
-  overrideAccess?: boolean
 }
 
 type BucketedResult = { docs: { bucket: string; value: number }[] }

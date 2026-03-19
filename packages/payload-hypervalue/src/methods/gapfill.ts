@@ -1,22 +1,14 @@
 import { sql } from '@payloadcms/db-postgres/drizzle'
-import type { CollectionSlug, PayloadRequest } from 'payload'
 
 import { defineMethod } from '../registry/define.js'
+import type { BaseArgs, WithField, WithOptionalId, WithInterval, WithRequiredTimeRange } from '../registry/args.js'
 import type { HypervalueDescriptor } from '../registry/types.js'
 import { resolveTable, validateNumeric, buildWhereClause } from '../registry/utils.js'
 
 export type GapfillMethod = 'locf' | 'interpolate'
 
-export type GapfillArgs = {
-  collection: CollectionSlug
-  field: string
-  id?: string | number
-  interval: string
-  from: Date
-  to: Date
+export type GapfillArgs = BaseArgs & WithField & WithOptionalId & WithInterval & WithRequiredTimeRange & {
   method?: GapfillMethod
-  req?: PayloadRequest
-  overrideAccess?: boolean
 }
 
 type GapfillRow = { bucket: string; value: number | null }

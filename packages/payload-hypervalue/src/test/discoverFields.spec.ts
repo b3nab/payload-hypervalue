@@ -399,4 +399,32 @@ describe('inferSqlType', () => {
   test('relationship maps to uuid', () => {
     expect(inferSqlType({ fieldType: 'relationship', hypervalueConfig: true })).toBe('uuid')
   })
+
+  test('point maps to geometry(POINT, 4326)', () => {
+    expect(inferSqlType({ fieldType: 'point', hypervalueConfig: true })).toBe('geometry(POINT, 4326)')
+  })
+})
+
+describe('discoverHypervalueFields — point field support', () => {
+  test('discovers point field with hypervalue marker', () => {
+    const collections: CollectionConfig[] = [
+      {
+        slug: 'vehicles',
+        fields: [
+          { name: 'name', type: 'text' },
+          { name: 'location', type: 'point', custom: { hypervalue: true } },
+        ],
+      },
+    ]
+
+    const { fields } = discoverHypervalueFields(collections)
+    expect(fields).toHaveLength(1)
+    expect(fields[0]).toMatchObject({
+      collectionSlug: 'vehicles',
+      fieldName: 'location',
+      fieldType: 'point',
+      tableName: 'hv_vehicles_location',
+      sqlValueType: 'geometry(POINT, 4326)',
+    })
+  })
 })

@@ -1,21 +1,14 @@
 import { sql } from '@payloadcms/db-postgres/drizzle'
-import type { CollectionSlug, PayloadRequest } from 'payload'
 
 import { defineMethod } from '../registry/define.js'
+import type { BaseArgs, WithField, WithOptionalId, WithTimeRange } from '../registry/args.js'
 import type { HypervalueDescriptor } from '../registry/types.js'
 import type { HypervalueRecord } from '../types.js'
 import { resolveTable, buildWhereClause } from '../registry/utils.js'
 
-export type TopNArgs = {
-  collection: CollectionSlug
-  field: string
-  id?: string | number
+export type TopNArgs = BaseArgs & WithField & WithOptionalId & WithTimeRange & {
   n: number
   direction: 'asc' | 'desc'
-  from?: Date
-  to?: Date
-  req?: PayloadRequest
-  overrideAccess?: boolean
 }
 
 type TopNResult = {

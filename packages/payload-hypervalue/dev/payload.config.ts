@@ -62,6 +62,17 @@ export default buildConfig({
       ],
     },
     {
+      slug: 'vehicles',
+      fields: [
+        { name: 'name', type: 'text' },
+        {
+          name: 'location',
+          type: 'point',
+          custom: { hypervalue: true },
+        },
+      ],
+    },
+    {
       slug: 'media',
       fields: [],
       upload: {

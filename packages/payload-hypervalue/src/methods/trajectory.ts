@@ -1,21 +1,12 @@
 import { sql } from '@payloadcms/db-postgres/drizzle'
 import type { SQL } from '@payloadcms/db-postgres/drizzle'
-import type { CollectionSlug, PayloadRequest } from 'payload'
 
 import { defineMethod } from '../registry/define.js'
+import type { BaseArgs, WithOptionalField, WithId, WithTimeRange, WithPagination } from '../registry/args.js'
 import type { HypervalueDescriptor } from '../registry/types.js'
 import { resolvePointField } from '../registry/utils.js'
 
-export type TrajectoryArgs = {
-  collection: CollectionSlug
-  id: string | number
-  field?: string
-  from?: Date
-  to?: Date
-  limit?: number
-  req?: PayloadRequest
-  overrideAccess?: boolean
-}
+export type TrajectoryArgs = BaseArgs & WithOptionalField & WithId & WithTimeRange & WithPagination
 
 type TrajectoryPoint = {
   coordinates: [number, number]

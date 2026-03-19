@@ -43,7 +43,7 @@ describe('Hypervalue plugin — field-level (narrow tables)', () => {
     expect(book.price).toBe(9.99)
 
     // Query history — should have one entry
-    const history = await payload.hypervalue({
+    const history = await payload.hypervalue.history({
       collection: 'books',
       id: bookId,
       field: 'price',
@@ -61,7 +61,7 @@ describe('Hypervalue plugin — field-level (narrow tables)', () => {
       data: { price: 12.99 },
     })
 
-    const history = await payload.hypervalue({
+    const history = await payload.hypervalue.history({
       collection: 'books',
       id: bookId,
       field: 'price',
@@ -80,7 +80,7 @@ describe('Hypervalue plugin — field-level (narrow tables)', () => {
       data: { title: 'Updated Title' }, // price unchanged
     })
 
-    const history = await payload.hypervalue({
+    const history = await payload.hypervalue.history({
       collection: 'books',
       id: bookId,
       field: 'price',
@@ -92,7 +92,7 @@ describe('Hypervalue plugin — field-level (narrow tables)', () => {
 
   test('point-in-time query returns correct value', async () => {
     // The second price (12.99) was the latest
-    const history = await payload.hypervalue({
+    const history = await payload.hypervalue.history({
       collection: 'books',
       id: bookId,
       field: 'price',
@@ -105,7 +105,7 @@ describe('Hypervalue plugin — field-level (narrow tables)', () => {
   })
 
   test('records status field changes', async () => {
-    const history = await payload.hypervalue({
+    const history = await payload.hypervalue.history({
       collection: 'books',
       id: bookId,
       field: 'status',
@@ -121,7 +121,7 @@ describe('Hypervalue plugin — field-level (narrow tables)', () => {
       data: { status: 'out_of_stock' },
     })
 
-    const updated = await payload.hypervalue({
+    const updated = await payload.hypervalue.history({
       collection: 'books',
       id: bookId,
       field: 'status',
@@ -144,7 +144,7 @@ describe('Hypervalue plugin — field-level (narrow tables)', () => {
       data: { title: 'New Book', price: 5.99, status: 'available' },
     })
 
-    const history = await payload.hypervalue({
+    const history = await payload.hypervalue.history({
       collection: 'books',
       id: newBook.id,
       field: 'price',
@@ -161,7 +161,7 @@ describe('Hypervalue plugin — field-level (narrow tables)', () => {
     })
 
     await expect(
-      payload.hypervalue({
+      payload.hypervalue.history({
         collection: 'books',
         id: book.id,
         field: 'title', // not a hypervalue field (no custom.hypervalue)
@@ -188,7 +188,7 @@ describe('Hypervalue plugin — collection-level (wide tables)', () => {
     productId = product.id
 
     // Query full snapshot — no field param
-    const history = await payload.hypervalue({
+    const history = await payload.hypervalue.history({
       collection: 'products',
       id: productId,
       overrideAccess: true,
@@ -211,7 +211,7 @@ describe('Hypervalue plugin — collection-level (wide tables)', () => {
       data: { price: 24.99, active: false },
     })
 
-    const history = await payload.hypervalue({
+    const history = await payload.hypervalue.history({
       collection: 'products',
       id: productId,
       overrideAccess: true,
@@ -226,7 +226,7 @@ describe('Hypervalue plugin — collection-level (wide tables)', () => {
   })
 
   test('query single field from wide table', async () => {
-    const history = await payload.hypervalue({
+    const history = await payload.hypervalue.history({
       collection: 'products',
       id: productId,
       field: 'price',
@@ -240,7 +240,7 @@ describe('Hypervalue plugin — collection-level (wide tables)', () => {
   })
 
   test('point-in-time snapshot query', async () => {
-    const history = await payload.hypervalue({
+    const history = await payload.hypervalue.history({
       collection: 'products',
       id: productId,
       at: new Date(),
@@ -254,7 +254,7 @@ describe('Hypervalue plugin — collection-level (wide tables)', () => {
 
   test('opted-out field is not in wide table', async () => {
     // 'internal' field has hypervalue: false — should not appear in snapshot
-    const history = await payload.hypervalue({
+    const history = await payload.hypervalue.history({
       collection: 'products',
       id: productId,
       overrideAccess: true,
@@ -280,7 +280,7 @@ describe('Hypervalue plugin — collection-level (wide tables)', () => {
       },
     })
 
-    const history = await payload.hypervalue({
+    const history = await payload.hypervalue.history({
       collection: 'products',
       id: newProduct.id,
       overrideAccess: true,
@@ -296,7 +296,7 @@ describe('Hypervalue plugin — collection-level (wide tables)', () => {
     })
 
     await expect(
-      payload.hypervalue({
+      payload.hypervalue.history({
         collection: 'products',
         id: product.id,
         field: 'nonexistent',

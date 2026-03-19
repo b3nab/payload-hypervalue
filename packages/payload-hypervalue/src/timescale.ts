@@ -11,7 +11,8 @@ export async function verifyTimescaleVersion(payload: Payload): Promise<string> 
   const adapter = payload.db
   const drizzle = adapter.drizzle
 
-  // Ensure the extension is created (idempotent)
+  // Ensure extensions are created (idempotent)
+  await drizzle.execute(sql`CREATE EXTENSION IF NOT EXISTS postgis`)
   await drizzle.execute(sql`CREATE EXTENSION IF NOT EXISTS timescaledb`)
 
   const result = await drizzle.execute(

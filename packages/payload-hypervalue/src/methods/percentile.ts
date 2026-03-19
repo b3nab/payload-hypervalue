@@ -1,20 +1,13 @@
 import { sql } from '@payloadcms/db-postgres/drizzle'
 import type { SQL } from '@payloadcms/db-postgres/drizzle'
-import type { CollectionSlug, PayloadRequest } from 'payload'
 
 import { defineMethod } from '../registry/define.js'
+import type { BaseArgs, WithField, WithOptionalId, WithTimeRange } from '../registry/args.js'
 import type { HypervalueDescriptor } from '../registry/types.js'
 import { resolveTable, validateNumeric, buildWhereClause } from '../registry/utils.js'
 
-export type PercentileArgs = {
-  collection: CollectionSlug
-  field: string
-  id?: string | number
+export type PercentileArgs = BaseArgs & WithField & WithOptionalId & WithTimeRange & {
   percentiles: number[]
-  from?: Date
-  to?: Date
-  req?: PayloadRequest
-  overrideAccess?: boolean
 }
 
 type PercentileResult = {

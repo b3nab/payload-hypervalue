@@ -1,21 +1,14 @@
 import { sql } from '@payloadcms/db-postgres/drizzle'
 import type { SQL } from '@payloadcms/db-postgres/drizzle'
-import type { CollectionSlug, PayloadRequest } from 'payload'
 
 import { defineMethod } from '../registry/define.js'
+import type { BaseArgs, WithOptionalField, WithTimeRange, WithPagination } from '../registry/args.js'
 import type { HypervalueDescriptor } from '../registry/types.js'
 import { resolvePointField } from '../registry/utils.js'
 
-export type WithinArgs = {
-  collection: CollectionSlug
+export type WithinArgs = BaseArgs & WithOptionalField & WithTimeRange & WithPagination & {
   /** GeoJSON geometry (Polygon, MultiPolygon, etc.) */
   geometry: object
-  field?: string
-  from?: Date
-  to?: Date
-  limit?: number
-  req?: PayloadRequest
-  overrideAccess?: boolean
 }
 
 type WithinRecord = {
