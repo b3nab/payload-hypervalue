@@ -26,7 +26,7 @@ export async function verifyTimescaleVersion(payload: Payload): Promise<string> 
     )
   }
 
-  const version = rows[0].extversion
+  const version = rows[0].extversion as string
   const [major, minor] = version.split('.').map(Number)
   if (major < 2 || (major === 2 && minor < 15)) {
     throw new Error(
@@ -34,7 +34,7 @@ export async function verifyTimescaleVersion(payload: Payload): Promise<string> 
     )
   }
 
-  return version
+  return version as string
 }
 
 /**
@@ -152,7 +152,7 @@ export async function setupHypertables(
 
       const compRows = existingCompression.rows ?? existingCompression
       const needsUpdate = compRows.length === 0 ||
-        !compRows[0]?.config?.includes(config.compressionAfter)
+        !(compRows[0]?.config as string)?.includes(config.compressionAfter)
 
       if (needsUpdate) {
         // Remove existing policy if any
@@ -180,7 +180,7 @@ export async function setupHypertables(
 
       const retRows = existingRetention.rows ?? existingRetention
       const needsRetentionUpdate = retRows.length === 0 ||
-        !retRows[0]?.config?.includes(config.retentionAfter)
+        !(retRows[0]?.config as string)?.includes(config.retentionAfter)
 
       if (needsRetentionUpdate) {
         if (retRows.length > 0) {
@@ -314,7 +314,7 @@ export async function setupWideHypertables(
 
       const compRows = existingCompression.rows ?? existingCompression
       const needsUpdate = compRows.length === 0 ||
-        !compRows[0]?.config?.includes(config.compressionAfter)
+        !(compRows[0]?.config as string)?.includes(config.compressionAfter)
 
       if (needsUpdate) {
         if (compRows.length > 0) {
@@ -341,7 +341,7 @@ export async function setupWideHypertables(
 
       const retRows = existingRetention.rows ?? existingRetention
       const needsRetentionUpdate = retRows.length === 0 ||
-        !retRows[0]?.config?.includes(config.retentionAfter)
+        !(retRows[0]?.config as string)?.includes(config.retentionAfter)
 
       if (needsRetentionUpdate) {
         if (retRows.length > 0) {

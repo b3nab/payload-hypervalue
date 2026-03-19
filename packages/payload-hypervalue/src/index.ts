@@ -1,10 +1,10 @@
 import type { PostgresAdapter } from '@payloadcms/db-postgres'
-import type { Config, DatabaseAdapterObj, Plugin } from 'payload'
+import type { Config, CustomComponent, DatabaseAdapterObj, Plugin } from 'payload'
 
 import './augment.js'
 import { createAfterChangeHook, createCollectionAfterChangeHook } from './hooks.js'
 import { builtinMethods } from './registry/index.js'
-import { executeDescriptor } from './registry/execute.js'
+import { runDescriptor } from './registry/execute.js'
 import { createEndpointsFromRegistry } from './registry/endpoint.js'
 import { createBatchFunction } from './batch/index.js'
 import { detectToolkit, setupHypertables, setupWideHypertables, verifyTimescaleVersion } from './timescale.js'
@@ -93,6 +93,63 @@ export const payloadHypervalue =
       return jsonSchema
     })
 
+    // Inject admin UI components for tracked fields and collections
+    const trackedBadge: CustomComponent = '@b3nab/payload-hypervalue/client#TrackedBadge'
+
+    for (const collection of config.collections) {
+      // Field-level: inject TrackedBadge, HypervalueFieldWrapper, and smart Cell
+      const fieldsForCollection = discoveredFields.filter((df) => df.collectionSlug === collection.slug)
+      for (const discovered of fieldsForCollection) {
+        const field = collection.fields.find(
+          (f) => 'name' in f && f.name === discovered.fieldName,
+        )
+        if (!field || !('name' in field)) continue
+
+        const admin = field.admin ?? (field.admin = {})
+        const components = admin.components ?? (admin.components = {})
+
+        const wrapperComponent: CustomComponent = {
+          path: '@b3nab/payload-hypervalue/client#HypervalueFieldWrapper',
+          clientProps: { collection: collection.slug, field: discovered.fieldName },
+        }
+
+        components.beforeInput = [...(components.beforeInput ?? []), trackedBadge]
+        components.afterInput = [...(components.afterInput ?? []), wrapperComponent]
+
+        if (field.type === 'number') {
+          components.Cell = {
+            path: '@b3nab/payload-hypervalue/client#TrendCell',
+            clientProps: { collection: collection.slug, field: discovered.fieldName },
+          }
+        } else if (field.type === 'select') {
+          components.Cell = {
+            path: '@b3nab/payload-hypervalue/client#StateCell',
+            clientProps: { collection: collection.slug, field: discovered.fieldName },
+          }
+        }
+      }
+
+      // Collection-level: inject DocumentPulse as a ui field at the top
+      const discoveredCollection = discoveredCollections.find((dc) => dc.collectionSlug === collection.slug)
+      if (discoveredCollection) {
+        collection.fields.unshift({
+          name: '_hypervalue_pulse',
+          type: 'ui',
+          admin: {
+            components: {
+              Field: {
+                path: '@b3nab/payload-hypervalue/client#DocumentPulse',
+                clientProps: {
+                  collection: collection.slug,
+                  trackedFields: discoveredCollection.fields.map((f) => f.fieldName),
+                },
+              },
+            },
+          },
+        })
+      }
+    }
+
     if (!config.db) {
       throw new Error('[hypervalue] No database adapter configured. The hypervalue plugin requires @payloadcms/db-postgres.')
     }
@@ -162,10 +219,6 @@ export const payloadHypervalue =
     const incomingOnInit = config.onInit
 
     config.onInit = async (payload) => {
-      if (incomingOnInit) {
-        await incomingOnInit(payload)
-      }
-
       // Verify adapter is Drizzle-based
       const adapter = payload.db
       if (!adapter.drizzle) {
@@ -179,6 +232,7 @@ export const payloadHypervalue =
       console.log(`[hypervalue] TimescaleDB ${version} detected.`)
 
       // Convert tables to hypertables + reconcile policies
+      // This MUST happen before user's onInit (which may create documents that trigger hooks)
       await setupWideHypertables(payload, discoveredCollections, pluginConfig)
       await setupHypertables(payload, discoveredFields, pluginConfig)
       console.log(`[hypervalue] ${discoveredCollections.length} wide + ${discoveredFields.length} narrow hypertable(s) configured.`)
@@ -190,15 +244,22 @@ export const payloadHypervalue =
       discoveryResult._toolkitAvailable = await detectToolkit(payload)
 
       // Attach payload.hypervalue namespace
-      const namespace = {} as Record<string, Function>
+      // Each method wraps its registry builder with execution logic
+      const namespace: Record<string, Function> = {}
       for (const [name, method] of Object.entries(builtinMethods)) {
-        namespace[name] = async (args: any) => {
-          const descriptor = method.build(discoveryResult, args)
-          return executeDescriptor(payload, descriptor, args)
+        const methodDef = method
+        namespace[name] = async (args: unknown) => {
+          const descriptor = methodDef.build(discoveryResult, args as never)
+          return runDescriptor(payload, descriptor, args as { overrideAccess?: boolean; req?: unknown })
         }
       }
-      ;(namespace as any).batch = createBatchFunction(payload, builtinMethods, discoveryResult)
-      payload.hypervalue = namespace as any
+      namespace.batch = createBatchFunction(payload, builtinMethods, discoveryResult)
+      payload.hypervalue = namespace as typeof payload.hypervalue
+
+      // Run user's onInit AFTER hypertables and namespace are ready
+      if (incomingOnInit) {
+        await incomingOnInit(payload)
+      }
     }
 
     return config

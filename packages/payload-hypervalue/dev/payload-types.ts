@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     books: Book;
     products: Product;
+    vehicles: Vehicle;
     media: Media;
     'payload-kv': PayloadKv;
     users: User;
@@ -80,6 +81,7 @@ export interface Config {
   collectionsSelect: {
     books: BooksSelect<false> | BooksSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
+    vehicles: VehiclesSelect<false> | VehiclesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -147,6 +149,21 @@ export interface Product {
     rating?: number | null;
   };
   internal?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vehicles".
+ */
+export interface Vehicle {
+  id: number;
+  name?: string | null;
+  /**
+   * @minItems 2
+   * @maxItems 2
+   */
+  location?: [number, number] | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -226,6 +243,10 @@ export interface PayloadLockedDocument {
         value: number | Product;
       } | null)
     | ({
+        relationTo: 'vehicles';
+        value: number | Vehicle;
+      } | null)
+    | ({
         relationTo: 'media';
         value: number | Media;
       } | null)
@@ -301,6 +322,16 @@ export interface ProductsSelect<T extends boolean = true> {
         rating?: T;
       };
   internal?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vehicles_select".
+ */
+export interface VehiclesSelect<T extends boolean = true> {
+  name?: T;
+  location?: T;
   updatedAt?: T;
   createdAt?: T;
 }

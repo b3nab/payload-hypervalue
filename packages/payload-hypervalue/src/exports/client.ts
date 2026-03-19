@@ -1,2 +1,10 @@
-// Client-side exports — reserved for future admin UI components
-export {}
+// Client-side exports — admin UI components
+export { TrackedBadge } from '../components/TrackedBadge.js'
+export { InlineSparkline } from '../components/InlineSparkline.js'
+export { ValueTimeline } from '../components/ValueTimeline.js'
+export { EmptyState } from '../components/EmptyState.js'
+export { HypervalueFieldWrapper } from '../components/HypervalueFieldWrapper.js'
+export { TrendCell } from '../components/TrendCell.js'
+export { StateCell } from '../components/StateCell.js'
+export { FreshnessCell } from '../components/FreshnessCell.js'
+export { DocumentPulse } from '../components/DocumentPulse.js'
