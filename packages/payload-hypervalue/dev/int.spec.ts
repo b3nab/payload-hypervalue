@@ -219,10 +219,11 @@ describe('Hypervalue plugin — collection-level (wide tables)', () => {
 
     expect(history.docs).toHaveLength(2)
     const latest = history.docs[0] as Record<string, unknown>
+    // Only changed fields are written — price and active changed, name did not
     expect(Number(latest.price)).toBe(24.99)
     expect(latest.active).toBe(false)
-    // Unchanged fields still present in snapshot
-    expect(latest.name).toBe('Widget')
+    // Unchanged fields are NULL in sparse rows (not full snapshots)
+    expect(latest.name).toBeNull()
   })
 
   test('query single field from wide table', async () => {

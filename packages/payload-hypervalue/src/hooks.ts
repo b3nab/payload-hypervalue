@@ -32,9 +32,33 @@ export function createCollectionAfterChangeHook(
   collection: DiscoveredCollection,
   config: HypervaluePluginConfig,
 ): CollectionAfterChangeHook {
-  return async ({ doc, req }) => {
+  return async ({ doc, previousDoc, operation, req }) => {
     // Skip drafts unless configured to track them
     if (doc._status && doc._status !== 'published' && !config.trackDrafts) return doc
+
+    // Determine which tracked fields actually changed.
+    // On create: all fields are new.
+    // On update: compare doc vs previousDoc for each tracked field.
+    const changedFields = operation === 'create'
+      ? collection.fields
+      : collection.fields.filter((field) => {
+          const current = getNestedValue(doc, field.fieldPath)
+          const previous = getNestedValue(previousDoc, field.fieldPath)
+
+          if (field.sqlValueType === 'geometry(POINT, 4326)') {
+            if (Array.isArray(current) && Array.isArray(previous)) {
+              return current[0] !== previous[0] || current[1] !== previous[1]
+            }
+            return current !== previous
+          }
+          if (field.sqlValueType === 'jsonb' || (typeof current === 'object' && current !== null)) {
+            return JSON.stringify(current) !== JSON.stringify(previous)
+          }
+          return current !== previous
+        })
+
+    // Nothing tracked changed
+    if (changedFields.length === 0) return doc
 
     const adapter = req.payload.db
     const schema = adapter.schemaName ?? 'public'
@@ -42,9 +66,9 @@ export function createCollectionAfterChangeHook(
     const qualifiedTable = sql.raw(`"${schema}"."${collection.tableName}"`)
     const recordedAt = new Date().toISOString()
 
-    // Build column names and parameterized values for full snapshot
-    const columnNames = collection.fields.map((f) => sql.raw(`"${f.columnName}"`))
-    const fieldValues = collection.fields.map((field) => {
+    // Only write columns that actually changed — not a full snapshot
+    const columnNames = changedFields.map((f) => sql.raw(`"${f.columnName}"`))
+    const fieldValues = changedFields.map((field) => {
       const raw = getNestedValue(doc, field.fieldPath)
       if (raw == null) return sql`${null}`
       if (field.sqlValueType === 'jsonb') return sql`${JSON.stringify(raw)}`

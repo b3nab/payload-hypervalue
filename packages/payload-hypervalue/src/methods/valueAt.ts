@@ -101,6 +101,7 @@ function buildWideFieldValueAt(
   const sqlFragment = sql`SELECT ${columnRef} AS value, recorded_at
     FROM ${qualifiedTable}
     WHERE document_id = ${args.id}
+      AND ${columnRef} IS NOT NULL
       AND recorded_at <= ${args.at.toISOString()}
     ORDER BY recorded_at DESC
     LIMIT 1`

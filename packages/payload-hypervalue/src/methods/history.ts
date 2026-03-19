@@ -170,10 +170,14 @@ function buildWideSingleFieldDescriptor(
   const qualifiedTable = sql.raw(`"${schema}"."${tableName}"`)
   const columnRef = sql.raw(`"${columnName}"`)
 
+  // Wide tables use sparse rows — filter out NULLs for this field
+  const notNull = sql`${columnRef} IS NOT NULL`
+
   if (args.at) {
     const sqlFragment = sql`SELECT recorded_at, ${columnRef} AS value
       FROM ${qualifiedTable}
       WHERE document_id = ${args.id}
+        AND ${notNull}
         AND recorded_at <= ${args.at.toISOString()}
       ORDER BY recorded_at DESC
       LIMIT 1`
@@ -191,21 +195,21 @@ function buildWideSingleFieldDescriptor(
   const combinedQuery = sql`WITH data AS (
     SELECT recorded_at, ${columnRef} AS value
     FROM ${qualifiedTable}
-    WHERE ${whereClause}
+    WHERE ${whereClause} AND ${notNull}
     ORDER BY recorded_at DESC
     LIMIT ${limit} OFFSET ${offset}
   ), total AS (
     SELECT COUNT(*)::int AS total
     FROM ${qualifiedTable}
-    WHERE ${whereClause}
+    WHERE ${whereClause} AND ${notNull}
   )
   SELECT d.*, t.total FROM data d, total t`
 
   return {
     sqlFragment: combinedQuery,
-    parse: (rows: any[]) => {
-      const totalDocs = rows.length > 0 ? rows[0].total : 0
-      const docs = rows.map(({ total: _, ...rest }) => rest) as HypervalueRecord[]
+    parse: (rows: unknown[]) => {
+      const totalDocs = (rows as Record<string, unknown>[]).length > 0 ? (rows as Record<string, unknown>[])[0].total as number : 0
+      const docs = (rows as Record<string, unknown>[]).map(({ total: _, ...rest }) => rest) as HypervalueRecord[]
       return { docs, totalDocs }
     },
     validate: () => {},

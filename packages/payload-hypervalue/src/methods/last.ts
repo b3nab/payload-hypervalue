@@ -91,7 +91,7 @@ function buildWideLast(
 
   const sqlFragment = sql`SELECT ${columnRef} AS value, recorded_at
     FROM ${qualifiedTable}
-    WHERE ${whereClause}
+    WHERE ${whereClause} AND ${columnRef} IS NOT NULL
     ORDER BY recorded_at DESC
     LIMIT 1`
 

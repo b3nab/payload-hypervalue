@@ -30,7 +30,7 @@ export const countMethod = defineMethod<CountArgs, CountResult>({
       const wideField = wideCollection?.fields.find((f) => f.fieldName === args.field)
 
       if (wideCollection && wideField) {
-        return buildCount(schema, wideCollection.tableName, args)
+        return buildCount(schema, wideCollection.tableName, args, wideField.columnName)
       }
 
       throw new Error(
@@ -75,13 +75,18 @@ function buildCount(
   schema: string,
   tableName: string,
   args: CountArgs,
+  wideColumnName?: string,
 ): HypervalueDescriptor<CountResult> {
   const qualifiedTable = sql.raw(`"${schema}"."${tableName}"`)
   const whereClause = buildWhere(args)
+  // For wide tables: only count rows where this field is NOT NULL (sparse rows)
+  const nullFilter = wideColumnName
+    ? sql` AND ${sql.raw(`"${wideColumnName}"`)} IS NOT NULL`
+    : sql``
 
   const sqlFragment = sql`SELECT COUNT(*)::int AS total
     FROM ${qualifiedTable}
-    WHERE ${whereClause}`
+    WHERE ${whereClause}${nullFilter}`
 
   return {
     sqlFragment,
