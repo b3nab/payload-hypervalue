@@ -9,6 +9,8 @@ import { percentileMethod } from '../methods/percentile.js'
 import { deltaMethod } from '../methods/delta.js'
 import { timeInStateMethod } from '../methods/timeInState.js'
 import { gapfillMethod } from '../methods/gapfill.js'
+import { topNMethod } from '../methods/topN.js'
+import { candlestickMethod } from '../methods/candlestick.js'
 
 export const builtinMethods = {
   history: historyMethod,
@@ -22,4 +24,6 @@ export const builtinMethods = {
   delta: deltaMethod,
   timeInState: timeInStateMethod,
   gapfill: gapfillMethod,
+  topN: topNMethod,
+  candlestick: candlestickMethod,
 }

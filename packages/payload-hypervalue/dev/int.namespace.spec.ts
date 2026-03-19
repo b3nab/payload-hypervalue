@@ -521,3 +521,90 @@ describe('Hypervalue namespace — analysis methods', () => {
     ).rejects.toThrow()
   })
 })
+
+describe('Hypervalue namespace — topN and candlestick', () => {
+  let bookId: number | string
+
+  test('setup: create book with price changes for topN/candlestick', async () => {
+    const book = await payload.create({
+      collection: 'books',
+      data: { title: 'TopN Candlestick Test Book', price: 10, status: 'available' },
+    })
+    bookId = book.id
+
+    await new Promise((r) => setTimeout(r, 50))
+
+    await payload.update({
+      collection: 'books',
+      where: { id: { equals: bookId } },
+      data: { price: 20 },
+    })
+
+    await new Promise((r) => setTimeout(r, 50))
+
+    await payload.update({
+      collection: 'books',
+      where: { id: { equals: bookId } },
+      data: { price: 35 },
+    })
+  })
+
+  test('topN() returns N highest values', async () => {
+    const result = await payload.hypervalue.topN({
+      collection: 'books',
+      field: 'price',
+      id: bookId,
+      n: 2,
+      direction: 'desc',
+      overrideAccess: true,
+    })
+    expect(result.docs).toBeInstanceOf(Array)
+    expect(result.docs.length).toBeLessThanOrEqual(2)
+    if (result.docs.length === 2) {
+      expect(Number(result.docs[0].value)).toBeGreaterThanOrEqual(Number(result.docs[1].value))
+    }
+  })
+
+  test('topN() returns N lowest values', async () => {
+    const result = await payload.hypervalue.topN({
+      collection: 'books',
+      field: 'price',
+      id: bookId,
+      n: 1,
+      direction: 'asc',
+      overrideAccess: true,
+    })
+    expect(result.docs).toHaveLength(1)
+  })
+
+  test('candlestick() returns OHLCV buckets', async () => {
+    const result = await payload.hypervalue.candlestick({
+      collection: 'books',
+      field: 'price',
+      id: bookId,
+      interval: '1 day',
+      overrideAccess: true,
+    })
+    expect(result.docs).toBeInstanceOf(Array)
+    expect(result.docs.length).toBeGreaterThan(0)
+    const candle = result.docs[0]
+    expect(candle).toHaveProperty('bucket')
+    expect(candle).toHaveProperty('open')
+    expect(candle).toHaveProperty('high')
+    expect(candle).toHaveProperty('low')
+    expect(candle).toHaveProperty('close')
+    expect(candle).toHaveProperty('volume')
+  })
+
+  test('candlestick() rejects non-numeric field', async () => {
+    await expect(
+      payload.hypervalue.candlestick({
+        collection: 'books',
+        field: 'status',
+        id: bookId,
+        interval: '1 day',
+        overrideAccess: true,
+      }),
+    ).rejects.toThrow(/numeric/)
+  })
+})
