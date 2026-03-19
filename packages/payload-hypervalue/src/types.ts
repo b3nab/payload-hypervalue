@@ -45,6 +45,8 @@ export type DiscoveredCollection = {
 export type DiscoveryResult = {
   collections: DiscoveredCollection[]
   fields: DiscoveredField[]
+  _schemaName?: string
+  _toolkitAvailable?: boolean
 }
 
 export type HypervalueQueryArgs = {

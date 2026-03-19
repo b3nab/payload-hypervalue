@@ -6,7 +6,7 @@ import { createAfterChangeHook, createCollectionAfterChangeHook } from './hooks.
 import { builtinMethods } from './registry/index.js'
 import { executeDescriptor } from './registry/execute.js'
 import { createEndpointsFromRegistry } from './registry/endpoint.js'
-import { setupHypertables, setupWideHypertables, verifyTimescaleVersion } from './timescale.js'
+import { detectToolkit, setupHypertables, setupWideHypertables, verifyTimescaleVersion } from './timescale.js'
 import type { HypervaluePluginConfig } from './types.js'
 import { discoverHypervalueFields } from './types.js'
 
@@ -120,6 +120,9 @@ export const payloadHypervalue =
 
       // Store schema name on discovery result for use by method builders
       discoveryResult._schemaName = adapter.schemaName ?? 'public'
+
+      // Detect toolkit availability
+      discoveryResult._toolkitAvailable = await detectToolkit(payload)
 
       // Attach payload.hypervalue namespace
       const namespace = {} as Record<string, Function>

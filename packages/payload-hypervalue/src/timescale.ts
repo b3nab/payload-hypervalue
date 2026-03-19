@@ -37,6 +37,22 @@ export async function verifyTimescaleVersion(payload: Payload): Promise<string> 
 }
 
 /**
+ * Detect whether the timescaledb_toolkit extension is available.
+ */
+export async function detectToolkit(payload: Payload): Promise<boolean> {
+  try {
+    const drizzle = (payload.db as any).drizzle
+    const result = await drizzle.execute(
+      sql`SELECT extversion FROM pg_extension WHERE extname = 'timescaledb_toolkit'`,
+    )
+    const rows = result.rows ?? result
+    return rows.length > 0
+  } catch {
+    return false
+  }
+}
+
+/**
  * Convert tables to hypertables, reconcile chunk intervals and policies.
  */
 export async function setupHypertables(

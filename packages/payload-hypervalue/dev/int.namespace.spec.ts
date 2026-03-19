@@ -136,6 +136,151 @@ describe('Hypervalue namespace — first, last, count, valueAt (narrow tables)',
   })
 })
 
+describe('Hypervalue namespace — aggregation methods', () => {
+  let bookId: number | string
+
+  test('setup: create book with price changes for aggregation', async () => {
+    const book = await payload.create({
+      collection: 'books',
+      data: { title: 'Aggregation Test Book', price: 10, status: 'available' },
+    })
+    bookId = book.id
+
+    await new Promise((r) => setTimeout(r, 50))
+
+    await payload.update({
+      collection: 'books',
+      where: { id: { equals: bookId } },
+      data: { price: 20 },
+    })
+
+    await new Promise((r) => setTimeout(r, 50))
+
+    await payload.update({
+      collection: 'books',
+      where: { id: { equals: bookId } },
+      data: { price: 30 },
+    })
+  })
+
+  test('aggregate() with interval returns bucketed averages', async () => {
+    const result = await payload.hypervalue.aggregate({
+      collection: 'books',
+      field: 'price',
+      id: bookId,
+      interval: '1 day',
+      metric: 'avg',
+      overrideAccess: true,
+    })
+    expect((result as any).docs).toBeInstanceOf(Array)
+    expect((result as any).docs[0]).toHaveProperty('bucket')
+    expect((result as any).docs[0]).toHaveProperty('value')
+  })
+
+  test('aggregate() without interval returns single value', async () => {
+    const result = await payload.hypervalue.aggregate({
+      collection: 'books',
+      field: 'price',
+      id: bookId,
+      metric: 'avg',
+      overrideAccess: true,
+    })
+    expect((result as any).doc).toHaveProperty('value')
+    expect((result as any).doc.value).toBe(20) // avg of 10, 20, 30
+  })
+
+  test('aggregate() count works on any field type', async () => {
+    const result = await payload.hypervalue.aggregate({
+      collection: 'books',
+      field: 'price',
+      id: bookId,
+      metric: 'count',
+      overrideAccess: true,
+    })
+    expect((result as any).doc.value).toBe(3)
+  })
+
+  test('aggregate() rejects non-numeric field for avg', async () => {
+    await expect(
+      payload.hypervalue.aggregate({
+        collection: 'books',
+        field: 'status',
+        id: bookId,
+        metric: 'avg',
+        overrideAccess: true,
+      }),
+    ).rejects.toThrow(/numeric/)
+  })
+
+  test('stats() returns statistical summary', async () => {
+    const result = await payload.hypervalue.stats({
+      collection: 'books',
+      field: 'price',
+      id: bookId,
+      overrideAccess: true,
+    })
+    expect(result.doc).toHaveProperty('mean')
+    expect(result.doc).toHaveProperty('stddev')
+    expect(result.doc).toHaveProperty('variance')
+    expect(result.doc).toHaveProperty('min')
+    expect(result.doc).toHaveProperty('max')
+    expect(result.doc).toHaveProperty('count')
+    expect(result.doc.count).toBe(3)
+    expect(result.doc.mean).toBe(20) // avg of 10, 20, 30
+    expect(result.doc.min).toBe(10)
+    expect(result.doc.max).toBe(30)
+  })
+
+  test('stats() rejects non-numeric field', async () => {
+    await expect(
+      payload.hypervalue.stats({
+        collection: 'books',
+        field: 'status',
+        id: bookId,
+        overrideAccess: true,
+      }),
+    ).rejects.toThrow(/numeric/)
+  })
+
+  test('percentile() returns percentile values', async () => {
+    const result = await payload.hypervalue.percentile({
+      collection: 'books',
+      field: 'price',
+      id: bookId,
+      percentiles: [0.5],
+      overrideAccess: true,
+    })
+    expect(result.doc).toHaveProperty('0.5')
+    expect(result.doc['0.5']).toBeGreaterThanOrEqual(10)
+    expect(result.doc['0.5']).toBeLessThanOrEqual(30)
+  })
+
+  test('percentile() with multiple percentiles', async () => {
+    const result = await payload.hypervalue.percentile({
+      collection: 'books',
+      field: 'price',
+      id: bookId,
+      percentiles: [0.25, 0.5, 0.75],
+      overrideAccess: true,
+    })
+    expect(result.doc).toHaveProperty('0.25')
+    expect(result.doc).toHaveProperty('0.5')
+    expect(result.doc).toHaveProperty('0.75')
+  })
+
+  test('percentile() rejects non-numeric field', async () => {
+    await expect(
+      payload.hypervalue.percentile({
+        collection: 'books',
+        field: 'status',
+        id: bookId,
+        percentiles: [0.5],
+        overrideAccess: true,
+      }),
+    ).rejects.toThrow(/numeric/)
+  })
+})
+
 describe('Hypervalue namespace — first, last, count, valueAt (wide tables)', () => {
   let productId: number | string
 
