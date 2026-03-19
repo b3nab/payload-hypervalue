@@ -1,9 +1,10 @@
 import { sql } from '@payloadcms/db-postgres/drizzle'
 import type { SQL } from '@payloadcms/db-postgres/drizzle'
-import type { Payload } from 'payload'
+import type { CollectionSlug, Payload } from 'payload'
 import type { DiscoveryResult } from '../types.js'
 
 const NUMERIC_SQL_TYPES = new Set(['numeric', 'double precision', 'bigint'])
+const POINT_SQL_TYPE = 'geometry(POINT, 4326)'
 
 export type ResolvedTable = {
   tableName: string
@@ -104,7 +105,7 @@ export function buildWhereClause(args: WhereClauseArgs): SQL {
   const conditions: SQL[] = []
 
   if (args.id !== undefined) {
-    conditions.push(sql`parent_id = ${args.id}`)
+    conditions.push(sql`document_id = ${args.id}`)
   }
 
   if (args.from) {
@@ -129,7 +130,7 @@ export function buildWhereClause(args: WhereClauseArgs): SQL {
  */
 export async function checkAccess(
   payload: Payload,
-  accessCheck: { collection: string; id?: string | number },
+  accessCheck: { collection: CollectionSlug; id?: string | number },
   args: { overrideAccess?: boolean; req?: unknown },
 ): Promise<void> {
   if (args.overrideAccess) return
@@ -138,8 +139,55 @@ export async function checkAccess(
 
   // This will throw if the user does not have read access
   await payload.findByID({
-    collection: accessCheck.collection as any,
+    collection: accessCheck.collection,
     id: accessCheck.id,
     req: args.req as any,
   })
+}
+
+/**
+ * Resolve the Point field for a given collection.
+ * If `fieldName` is provided, resolves that specific field and validates it's a point.
+ * If not provided, auto-detects the single Point field on the collection.
+ * Throws if no point field found or multiple point fields found without specifying one.
+ */
+export function resolvePointField(
+  discovery: DiscoveryResult,
+  args: { collectionSlug: string; fieldName?: string },
+): ResolvedTable {
+  if (args.fieldName) {
+    const resolved = resolveTable(discovery, { collectionSlug: args.collectionSlug, fieldName: args.fieldName })
+    if (resolved.sqlValueType !== POINT_SQL_TYPE) {
+      throw new Error(
+        `[hypervalue] Field "${args.fieldName}" on "${args.collectionSlug}" is not a Point field (type: ${resolved.sqlValueType}).`,
+      )
+    }
+    return resolved
+  }
+
+  // Auto-detect: find all point fields for this collection
+  const pointFields = discovery.fields.filter(
+    (f) => f.collectionSlug === args.collectionSlug && f.sqlValueType === POINT_SQL_TYPE,
+  )
+
+  if (pointFields.length === 1) {
+    return {
+      tableName: pointFields[0].tableName,
+      valueColumn: 'value',
+      isWide: false,
+      sqlValueType: POINT_SQL_TYPE,
+    }
+  }
+
+  if (pointFields.length === 0) {
+    throw new Error(
+      `[hypervalue] No Point field found on collection "${args.collectionSlug}". ` +
+        `Ensure a point field has hypervalue enabled.`,
+    )
+  }
+
+  throw new Error(
+    `[hypervalue] Multiple Point fields found on collection "${args.collectionSlug}": ` +
+      `${pointFields.map((f) => f.fieldName).join(', ')}. Specify which one with the "field" parameter.`,
+  )
 }

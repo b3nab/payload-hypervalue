@@ -1,12 +1,12 @@
 import { sql } from '@payloadcms/db-postgres/drizzle'
-import type { PayloadRequest } from 'payload'
+import type { CollectionSlug, PayloadRequest } from 'payload'
 
 import { defineMethod } from '../registry/define.js'
 import type { HypervalueDescriptor } from '../registry/types.js'
 import type { HypervalueRecord, HypervalueSnapshotRecord } from '../types.js'
 
 export type ValueAtArgs = {
-  collection: string
+  collection: CollectionSlug
   field?: string
   id: string | number
   /** The point in time to query */

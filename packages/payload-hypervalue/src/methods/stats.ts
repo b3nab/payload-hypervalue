@@ -1,12 +1,12 @@
 import { sql } from '@payloadcms/db-postgres/drizzle'
-import type { PayloadRequest } from 'payload'
+import type { CollectionSlug, PayloadRequest } from 'payload'
 
 import { defineMethod } from '../registry/define.js'
 import type { HypervalueDescriptor } from '../registry/types.js'
 import { resolveTable, validateNumeric, buildWhereClause } from '../registry/utils.js'
 
 export type StatsArgs = {
-  collection: string
+  collection: CollectionSlug
   field: string
   id?: string | number
   from?: Date
