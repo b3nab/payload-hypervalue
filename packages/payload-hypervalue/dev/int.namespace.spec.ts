@@ -395,3 +395,129 @@ describe('Hypervalue namespace — first, last, count, valueAt (wide tables)', (
     expect(Number(result.doc!.value)).toBe(300)
   })
 })
+
+describe('Hypervalue namespace — analysis methods', () => {
+  let bookId: number | string
+
+  test('setup: create book with price and status changes', async () => {
+    const book = await payload.create({
+      collection: 'books',
+      data: { title: 'Analysis Test Book', price: 10, status: 'available' },
+    })
+    bookId = book.id
+
+    await new Promise((r) => setTimeout(r, 50))
+
+    await payload.update({
+      collection: 'books',
+      where: { id: { equals: bookId } },
+      data: { price: 20, status: 'out_of_stock' },
+    })
+
+    await new Promise((r) => setTimeout(r, 50))
+
+    await payload.update({
+      collection: 'books',
+      where: { id: { equals: bookId } },
+      data: { price: 35 },
+    })
+  })
+
+  test('delta() returns per-record deltas', async () => {
+    // First verify how many price records exist
+    const count = await payload.hypervalue.count({
+      collection: 'books',
+      field: 'price',
+      id: bookId,
+      overrideAccess: true,
+    })
+
+    const result = await payload.hypervalue.delta({
+      collection: 'books',
+      field: 'price',
+      id: bookId,
+      overrideAccess: true,
+    })
+    expect(result.docs).toBeInstanceOf(Array)
+    // deltas = count - 1 (first record has no previous to compare)
+    expect(result.docs.length).toBe(count.totalDocs - 1)
+    expect(result.docs.length).toBeGreaterThanOrEqual(1)
+    const first = result.docs[0] as any
+    expect(first).toHaveProperty('delta')
+    expect(first).toHaveProperty('rate')
+    expect(first).toHaveProperty('recorded_at')
+    expect(typeof first.delta).toBe('number')
+  })
+
+  test('delta() with interval returns bucketed deltas', async () => {
+    const result = await payload.hypervalue.delta({
+      collection: 'books',
+      field: 'price',
+      id: bookId,
+      interval: '1 day',
+      overrideAccess: true,
+    })
+    expect(result.docs).toBeInstanceOf(Array)
+    expect(result.docs.length).toBeGreaterThanOrEqual(1)
+    const first = result.docs[0] as any
+    expect(first).toHaveProperty('bucket')
+    expect(first).toHaveProperty('delta')
+  })
+
+  test('delta() rejects non-numeric field', async () => {
+    await expect(
+      payload.hypervalue.delta({
+        collection: 'books',
+        field: 'status',
+        id: bookId,
+        overrideAccess: true,
+      }),
+    ).rejects.toThrow(/numeric/)
+  })
+
+  test('timeInState() returns state durations', async () => {
+    const result = await payload.hypervalue.timeInState({
+      collection: 'books',
+      field: 'status',
+      id: bookId,
+      overrideAccess: true,
+    })
+    expect(result.docs).toBeInstanceOf(Array)
+    expect(result.docs.length).toBeGreaterThan(0)
+    expect(result.docs[0]).toHaveProperty('state')
+    expect(result.docs[0]).toHaveProperty('duration')
+    expect(result.docs[0]).toHaveProperty('unit')
+    expect(result.docs[0].unit).toBe('seconds')
+  })
+
+  test('gapfill() fills missing buckets', async () => {
+    const now = new Date()
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const result = await payload.hypervalue.gapfill({
+      collection: 'books',
+      field: 'price',
+      id: bookId,
+      interval: '1 day',
+      from: weekAgo,
+      to: now,
+      overrideAccess: true,
+    })
+    expect(result.docs).toBeInstanceOf(Array)
+    // Should have ~7-8 buckets (one per day)
+    expect(result.docs.length).toBeGreaterThanOrEqual(7)
+    expect(result.docs[0]).toHaveProperty('bucket')
+    expect(result.docs[0]).toHaveProperty('value')
+  })
+
+  test('gapfill() throws when from/to missing', async () => {
+    await expect(
+      payload.hypervalue.gapfill({
+        collection: 'books',
+        field: 'price',
+        id: bookId,
+        interval: '1 day',
+        overrideAccess: true,
+      } as any),
+    ).rejects.toThrow()
+  })
+})

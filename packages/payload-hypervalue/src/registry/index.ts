@@ -6,6 +6,9 @@ import { valueAtMethod } from '../methods/valueAt.js'
 import { aggregateMethod } from '../methods/aggregate.js'
 import { statsMethod } from '../methods/stats.js'
 import { percentileMethod } from '../methods/percentile.js'
+import { deltaMethod } from '../methods/delta.js'
+import { timeInStateMethod } from '../methods/timeInState.js'
+import { gapfillMethod } from '../methods/gapfill.js'
 
 export const builtinMethods = {
   history: historyMethod,
@@ -16,4 +19,7 @@ export const builtinMethods = {
   aggregate: aggregateMethod,
   stats: statsMethod,
   percentile: percentileMethod,
+  delta: deltaMethod,
+  timeInState: timeInStateMethod,
+  gapfill: gapfillMethod,
 }
