@@ -3,11 +3,12 @@ import type { Config, DatabaseAdapterObj, Plugin } from 'payload'
 
 import './augment.js'
 import { createAfterChangeHook, createCollectionAfterChangeHook } from './hooks.js'
-import { queryHypervalue } from './query.js'
+import { builtinMethods } from './registry/index.js'
+import { executeDescriptor } from './registry/execute.js'
+import { createEndpointsFromRegistry } from './registry/endpoint.js'
 import { setupHypertables, setupWideHypertables, verifyTimescaleVersion } from './timescale.js'
 import type { HypervaluePluginConfig } from './types.js'
 import { discoverHypervalueFields } from './types.js'
-import { createHypervalueEndpoint } from './endpoints/hypervalueEndpoint.js'
 
 export type { HypervaluePluginConfig, HypervalueQueryArgs, HypervalueResult } from './types.js'
 
@@ -19,7 +20,8 @@ export const payloadHypervalue =
     }
 
     // Discover all hypervalue fields and collections
-    const { collections: discoveredCollections, fields: discoveredFields } = discoverHypervalueFields(config.collections)
+    const discoveryResult = discoverHypervalueFields(config.collections)
+    const { collections: discoveredCollections, fields: discoveredFields } = discoveryResult
 
     if (discoveredCollections.length === 0 && discoveredFields.length === 0) {
       console.warn('[hypervalue] No fields or collections with custom.hypervalue found. Plugin has nothing to do.')
@@ -50,11 +52,10 @@ export const payloadHypervalue =
       config.endpoints = []
     }
 
-    const endpointHandler = createHypervalueEndpoint(discoveredCollections, discoveredFields)
-    config.endpoints.push(
-      { handler: endpointHandler, method: 'get', path: '/hypervalue/:collection/:id/:field' },
-      { handler: endpointHandler, method: 'get', path: '/hypervalue/:collection/:id' },
-    )
+    const registryEndpoints = createEndpointsFromRegistry(builtinMethods, discoveryResult)
+    for (const ep of registryEndpoints) {
+      config.endpoints.push(ep)
+    }
 
     // Register afterChange hooks per collection
     const narrowFieldsByCollection = new Map<string, typeof discoveredFields>()
@@ -117,9 +118,18 @@ export const payloadHypervalue =
       await setupHypertables(payload, discoveredFields, pluginConfig)
       console.log(`[hypervalue] ${discoveredCollections.length} wide + ${discoveredFields.length} narrow hypertable(s) configured.`)
 
-      // Attach payload.hypervalue() method
-      payload.hypervalue = (args) =>
-        queryHypervalue(payload, discoveredCollections, discoveredFields, args)
+      // Store schema name on discovery result for use by method builders
+      discoveryResult._schemaName = adapter.schemaName ?? 'public'
+
+      // Attach payload.hypervalue namespace
+      const namespace = {} as Record<string, Function>
+      for (const [name, method] of Object.entries(builtinMethods)) {
+        namespace[name] = async (args: any) => {
+          const descriptor = method.build(discoveryResult, args)
+          return executeDescriptor(payload, descriptor, args)
+        }
+      }
+      payload.hypervalue = namespace as any
     }
 
     return config
