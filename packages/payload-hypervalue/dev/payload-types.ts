@@ -104,6 +104,11 @@ export interface Config {
     tasks: unknown;
     workflows: unknown;
   };
+  hypervalueFields?: {
+    products: 'name' | 'price' | 'active' | 'category' | 'rating';
+    books: 'price' | 'status';
+    vehicles: 'location';
+  };
 }
 export interface UserAuthOperations {
   forgotPassword: {
