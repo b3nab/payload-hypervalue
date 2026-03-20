@@ -14,7 +14,6 @@ export type { HypervalueExtensions } from './types.js'
 
 // Composable arg types for building method signatures
 export type {
-  HypervalueFieldMap,
   HypervalueCollectionSlug,
   HypervalueFieldOf,
   BaseArgs,

@@ -1,34 +1,51 @@
-import type { CollectionSlug, PayloadRequest } from 'payload'
+import type { CollectionSlug, GeneratedTypes, PayloadRequest } from 'payload'
 
 /**
- * Augmentable interface for hypervalue field map.
+ * THIS FILE IS TYPES-ONLY. Do not add runtime code.
  *
- * When users run `payload generate:types`, the generated `payload-types.ts`
- * populates `Config['hypervalueFields']` with a mapping of collection slugs
- * to their tracked field names. This interface bridges the generated types
- * back into the plugin's own type system.
+ * Follows the same three-stage resolution pattern used by @payloadcms/plugin-ecommerce:
+ * 1. After `generate:types`: GeneratedTypes has `hypervalueFields` → use precise types
+ * 2. Before `generate:types`: GeneratedTypes has `hypervalueFieldsUntyped` → use fallback
+ * 3. Neither exists: use permissive fallback
  *
- * Before codegen, it falls back to permissive `Record<string, string>`.
+ * The `hypervalueFieldsUntyped` augmentation below ensures the plugin always compiles.
  */
-export interface HypervalueFieldMap {}
+
+// Permissive fallback — accepts any collection slug and any field name
+type HypervalueFieldsUntyped = Record<string, string>
+
+// Three-stage resolution: prefer generated, then untyped fallback, then permissive
+type ResolveHvFields<T> = T extends { hypervalueFields: infer M }
+  ? M
+  : T extends { hypervalueFieldsUntyped: infer M }
+    ? M
+    : HypervalueFieldsUntyped
+
+type ResolvedHvFieldMap = ResolveHvFields<GeneratedTypes>
 
 /**
  * Resolves to only those CollectionSlug values that have hypervalue-tracked fields.
  * Falls back to the full CollectionSlug union when generated types are not available.
  */
-export type HypervalueCollectionSlug = keyof HypervalueFieldMap extends never
+export type HypervalueCollectionSlug = string extends keyof ResolvedHvFieldMap
   ? CollectionSlug
-  : Extract<keyof HypervalueFieldMap, CollectionSlug>
+  : Extract<keyof ResolvedHvFieldMap, string>
 
 /**
  * Resolves to the union of tracked field names for a given collection.
  * Falls back to `string` when generated types are not available.
  */
-export type HypervalueFieldOf<T extends string> = T extends keyof HypervalueFieldMap
-  ? HypervalueFieldMap[T] extends string
-    ? HypervalueFieldMap[T]
-    : string
+export type HypervalueFieldOf<T extends string> = T extends keyof ResolvedHvFieldMap
+  ? ResolvedHvFieldMap[T]
   : string
+
+// Provide fallback augmentation so plugin works before types are generated.
+// After codegen, `hypervalueFields` (non-optional, from typescript.schema) takes precedence.
+declare module 'payload' {
+  export interface GeneratedTypes {
+    hypervalueFieldsUntyped: HypervalueFieldsUntyped
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Composable arg building blocks
