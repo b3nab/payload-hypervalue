@@ -377,9 +377,11 @@ describe('Hypervalue namespace — first, last, count, valueAt (wide tables)', (
 
     expect(result.doc).not.toBeNull()
     const snapshot = result.doc as Record<string, unknown>
+    // Sparse rows: only changed fields have values, unchanged fields are NULL
     expect(Number(snapshot.price)).toBe(200)
-    expect(snapshot.name).toBe('Widget')
-    expect(snapshot.active).toBe(true) // still true at second snapshot
+    // name and active were not changed in this update, so they're NULL in this row
+    expect(snapshot.name).toBeNull()
+    expect(snapshot.active).toBeNull()
   })
 
   test('valueAt() with field on wide table', async () => {

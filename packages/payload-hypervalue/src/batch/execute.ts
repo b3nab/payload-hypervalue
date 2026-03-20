@@ -4,7 +4,7 @@ import type { DiscoveryResult } from '../types.js'
 import type { BatchOptions, BatchSettledItem } from './types.js'
 import { createBatchProxy, createScopedBatchProxy } from './proxy.js'
 import type { CollectedEntry } from './proxy.js'
-import { checkAccess } from '../registry/utils.js'
+import { checkAccess, resolveWhereIds } from '../registry/utils.js'
 
 export async function executeBatch(
   payload: Payload,
@@ -37,6 +37,24 @@ export async function executeBatch(
   const isArray = Array.isArray(shape)
   const entries: any[] = isArray ? shape : Object.values(shape)
   const keys: string[] | null = isArray ? null : Object.keys(shape)
+
+  // Resolve where-based scoping: convert Where clauses to document IDs
+  // and rebuild affected descriptors with resolved IDs
+  for (const entry of collected) {
+    if (!entry.ok) continue
+    if (entry.args.where && !entry.args.id) {
+      const ids = await resolveWhereIds(payload, entry.args.collection as string, entry.args.where)
+      entry.args._resolvedIds = ids
+      // Rebuild descriptor with resolved IDs
+      try {
+        entry.descriptor = entry.methodDef.build(discovery, entry.args as never)
+      } catch (err) {
+        // Convert to failed entry in-place
+        ;(entry as unknown as { ok: false; error: Error }).ok = false
+        ;(entry as unknown as { ok: false; error: Error }).error = err instanceof Error ? err : new Error(String(err))
+      }
+    }
+  }
 
   // Deduplicate access checks by (collection, id, overrideAccess)
   // Skip access checks where overrideAccess is true, and skip pre-failed entries

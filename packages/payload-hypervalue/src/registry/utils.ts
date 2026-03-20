@@ -1,6 +1,6 @@
 import { sql } from '@payloadcms/db-postgres/drizzle'
 import type { SQL } from '@payloadcms/db-postgres/drizzle'
-import type { CollectionSlug, Payload } from 'payload'
+import type { CollectionSlug, Payload, Where } from 'payload'
 import type { DiscoveryResult } from '../types.js'
 
 const NUMERIC_SQL_TYPES = new Set(['numeric', 'double precision', 'bigint'])
@@ -91,21 +91,44 @@ export type WhereClauseArgs = {
   from?: Date
   to?: Date
   where?: unknown
+  /** Pre-resolved document IDs from a `where` clause. Set by execution layer. */
+  _resolvedIds?: (string | number)[]
 }
 
 /**
- * Build a SQL WHERE clause from id, from, and to arguments.
- * The `where` parameter is reserved but not yet implemented.
+ * Resolve matching document IDs from a Payload Where clause.
+ * Uses the same pattern as Payload's internal deleteMany.
+ */
+export async function resolveWhereIds(
+  payload: Payload,
+  collection: string,
+  where: unknown,
+): Promise<(string | number)[]> {
+  const result = await payload.find({
+    collection: collection as CollectionSlug,
+    where: where as Where,
+    select: { id: true },
+    limit: 0,
+    pagination: false,
+    overrideAccess: true,
+  })
+  return result.docs.map((doc) => doc.id)
+}
+
+/**
+ * Build a SQL WHERE clause from id, from, to, and optionally pre-resolved IDs.
  */
 export function buildWhereClause(args: WhereClauseArgs): SQL {
-  if (args.where) {
-    throw new Error('[hypervalue] Custom "where" scoping is not yet implemented.')
-  }
-
   const conditions: SQL[] = []
 
   if (args.id !== undefined) {
     conditions.push(sql`document_id = ${args.id}`)
+  } else if (args._resolvedIds !== undefined) {
+    if (args._resolvedIds.length === 0) {
+      // Where matched zero docs — no results possible
+      return sql`FALSE`
+    }
+    conditions.push(sql`document_id = ANY(${args._resolvedIds})`)
   }
 
   if (args.from) {

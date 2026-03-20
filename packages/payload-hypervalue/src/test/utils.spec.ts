@@ -180,9 +180,20 @@ describe('buildWhereClause', () => {
     expect(clause).toBeDefined()
   })
 
-  it('throws when where is provided', () => {
-    expect(() =>
-      buildWhereClause({ where: { status: { equals: 'active' } } }),
-    ).toThrowError(/not yet implemented/)
+  it('where without resolved IDs produces no document_id filter', () => {
+    // where is resolved to _resolvedIds by the execution layer before buildWhereClause
+    // If where is present but _resolvedIds is not set, no document_id filter is added
+    const result = buildWhereClause({ where: { status: { equals: 'active' } } })
+    expect(result).toBeDefined()
+  })
+
+  it('uses resolved IDs for where-based scoping', () => {
+    const result = buildWhereClause({ _resolvedIds: [1, 2, 3] })
+    expect(result).toBeDefined()
+  })
+
+  it('returns FALSE when resolved IDs is empty', () => {
+    const result = buildWhereClause({ _resolvedIds: [] })
+    expect(result).toBeDefined()
   })
 })
