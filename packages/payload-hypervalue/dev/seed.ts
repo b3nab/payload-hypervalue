@@ -3,50 +3,43 @@ import type { Payload } from 'payload'
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 /**
- * Idempotent dev seed — creates sample data with deep hypervalue history
- * for testing admin UI components (charts, sparklines, timelines).
+ * Dev seed — wipes and re-creates sample data with deep hypervalue history
+ * on every server start. Provides rich data for admin UI components
+ * (charts, sparklines, timelines, trajectories).
  *
- * Safe to run multiple times; checks for existing data before inserting.
+ * Users are kept across restarts (idempotent). Everything else is fresh.
  */
 export const seed = async (payload: Payload): Promise<void> => {
-  let seeded = false
-
-  // --- Users ---
+  // --- Users (idempotent — keep across restarts) ---
   const existingUsers = await payload.find({ collection: 'users', limit: 1 })
   if (existingUsers.totalDocs === 0) {
     await payload.create({
       collection: 'users',
       data: { email: 'dev@payloadcms.com', password: 'test' },
     })
-    seeded = true
   }
 
-  // --- Books (deep price history for sparklines/charts) ---
-  seeded = (await seedBooks(payload)) || seeded
+  // --- Wipe and re-seed data collections (CASCADE deletes hv_ history) ---
+  console.log('[seed] Clearing existing dev data...')
+  await payload.delete({ collection: 'books', where: {}, overrideAccess: true })
+  await payload.delete({ collection: 'products', where: {}, overrideAccess: true })
+  await payload.delete({ collection: 'vehicles', where: {}, overrideAccess: true })
 
-  // --- Products (deep snapshot history for wide table testing) ---
-  seeded = (await seedProducts(payload)) || seeded
+  console.log('[seed] Seeding books...')
+  await seedBooks(payload)
+  console.log('[seed] Seeding products...')
+  await seedProducts(payload)
+  console.log('[seed] Seeding vehicles...')
+  await seedVehicles(payload)
 
-  // --- Vehicles (deep location history for trajectory/spatial) ---
-  seeded = (await seedVehicles(payload)) || seeded
-
-  if (seeded) {
-    console.log('[seed] Dev data seeded successfully.')
-  }
+  console.log('[seed] Dev data seeded successfully.')
 }
 
 // ---------------------------------------------------------------------------
 // Books — field-level tracking with many price fluctuations
 // ---------------------------------------------------------------------------
 
-async function seedBooks(payload: Payload): Promise<boolean> {
-  const existing = await payload.find({
-    collection: 'books',
-    where: { title: { equals: 'The Great Gatsby' } },
-    limit: 1,
-  })
-  if (existing.totalDocs > 0) return false
-
+async function seedBooks(payload: Payload): Promise<void> {
   // Book 1: The Great Gatsby — 60 price changes over "90 days"
   // Simulates a book going through promotions, price increases, clearance
   const gatsby = await payload.create({
@@ -118,21 +111,19 @@ async function seedBooks(payload: Payload): Promise<boolean> {
     await payload.update({ collection: 'books', id: f451.id, data })
   }
 
-  return true
+  // Book 6: New Arrival — just created, no updates yet (shows EmptyState)
+  await payload.create({
+    collection: 'books',
+    data: { title: 'New Arrival (no history)', price: 14.99, status: 'available' },
+  })
+
 }
 
 // ---------------------------------------------------------------------------
 // Products — collection-level (wide table) with rich snapshot history
 // ---------------------------------------------------------------------------
 
-async function seedProducts(payload: Payload): Promise<boolean> {
-  const existing = await payload.find({
-    collection: 'products',
-    where: { name: { equals: 'Wireless Headphones' } },
-    limit: 1,
-  })
-  if (existing.totalDocs > 0) return false
-
+async function seedProducts(payload: Payload): Promise<void> {
   // Product 1: Wireless Headphones — 40 updates (price, rating, active status)
   const headphones = await payload.create({
     collection: 'products',
@@ -202,21 +193,13 @@ async function seedProducts(payload: Payload): Promise<boolean> {
     })
   }
 
-  return true
 }
 
 // ---------------------------------------------------------------------------
 // Vehicles — deep location history for trajectory visualization
 // ---------------------------------------------------------------------------
 
-async function seedVehicles(payload: Payload): Promise<boolean> {
-  const existing = await payload.find({
-    collection: 'vehicles',
-    where: { name: { equals: 'Delivery Van A' } },
-    limit: 1,
-  })
-  if (existing.totalDocs > 0) return false
-
+async function seedVehicles(payload: Payload): Promise<void> {
   // Vehicle 1: Delivery Van A — 50 locations tracing a route through Manhattan
   const vanA = await payload.create({
     collection: 'vehicles',
@@ -277,7 +260,6 @@ async function seedVehicles(payload: Payload): Promise<boolean> {
     })
   }
 
-  return true
 }
 
 // ---------------------------------------------------------------------------
