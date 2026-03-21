@@ -1,4 +1,5 @@
 import type { Payload } from 'payload'
+import toSnakeCase from 'to-snake-case'
 
 import { sql } from '@payloadcms/db-postgres/drizzle'
 
@@ -68,7 +69,7 @@ export async function setupHypertables(
 
   for (const hvField of discoveredFields) {
     const qualifiedTable = sql.raw(`"${schema}"."${hvField.tableName}"`)
-    const parentTableName = adapter.tableNameMap?.get(hvField.collectionSlug) ?? hvField.collectionSlug
+    const parentTableName = adapter.tableNameMap?.get(toSnakeCase(hvField.collectionSlug)) ?? hvField.collectionSlug
     const qualifiedParent = sql.raw(`"${schema}"."${parentTableName}"`)
     const hypertableRef = sql.raw(`'${schema}.${hvField.tableName}'`)
     const indexName = sql.raw(`"${hvField.tableName}_query_idx"`)
@@ -212,7 +213,7 @@ export async function setupWideHypertables(
 
   for (const hvCollection of discoveredCollections) {
     const qualifiedTable = sql.raw(`"${schema}"."${hvCollection.tableName}"`)
-    const parentTableName = adapter.tableNameMap?.get(hvCollection.collectionSlug) ?? hvCollection.collectionSlug
+    const parentTableName = adapter.tableNameMap?.get(toSnakeCase(hvCollection.collectionSlug)) ?? hvCollection.collectionSlug
     const qualifiedParent = sql.raw(`"${schema}"."${parentTableName}"`)
     const hypertableRef = sql.raw(`'${schema}.${hvCollection.tableName}'`)
     const indexName = sql.raw(`"${hvCollection.tableName}_query_idx"`)
